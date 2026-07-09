@@ -7,10 +7,10 @@ output:
 editor_options:
   chunk_output_type: inline
 ---
-RESOLVE: Serum Proteomics
 
-#**PreSSc**
+## RESOLVE: Serum Proteomics
 
-*[1. PreSSc Synovitis vs. No Synovitis](PreSSc_Synovitis.html)
-*[2. PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
+### PreSSc
 
+1. [PreSSc Synovitis vs. No Synovitis](PreSSc_Synovitis.html)
+2. [PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
