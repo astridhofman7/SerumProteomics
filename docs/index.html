@@ -16,7 +16,7 @@
 <script src="site_libs/header-attrs-2.31/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
@@ -30,7 +30,7 @@
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
@@ -250,26 +250,37 @@ $(document).ready(function () {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">RESOLVE_SerumProteomics</a>
+      <a class="navbar-brand" href="index.html">Serum Proteomics</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
   <a href="index.html">Home</a>
 </li>
-<li>
-  <a href="about.html">About</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    PreSSc
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="PreSSc_Synovitis.html.html">PreSSc Synovitis vs. No Synovitis</a>
+    </li>
+    <li>
+      <a href="PreSScArthritis_vs_SScArthritis.html">PreSSc Arthritis versus SSc Arthritis</a>
+    </li>
+  </ul>
 </li>
 <li>
-  <a href="license.html">License</a>
+  <a href="about.html">About</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics">
-    <span class="fab fa-github"></span>
+  <a href="https://github.com/astridhofman7/SerumProteomics">
+    <span class="fa fa-github"></span>
      
-    Source code
   </a>
 </li>
       </ul>
@@ -357,15 +368,15 @@ results.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreeaec6d62dd6e2bfb7b52f05580e9f45d38e61efd3targetblankaec6d62a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreeccebd25475290806e9d53cb37c1f7b624a05c2f7targetblankccebd25a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/astridhofman7/SerumProteomics/tree/aec6d62dd6e2bfb7b52f05580e9f45d38e61efd3" target="_blank">aec6d62</a>
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/ccebd25475290806e9d53cb37c1f7b624a05c2f7" target="_blank">ccebd25</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreeaec6d62dd6e2bfb7b52f05580e9f45d38e61efd3targetblankaec6d62a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreeccebd25475290806e9d53cb37c1f7b624a05c2f7targetblankccebd25a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -375,7 +386,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/astridhofman7/SerumProteomics/tree/aec6d62dd6e2bfb7b52f05580e9f45d38e61efd3" target="_blank">aec6d62</a>.
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/ccebd25475290806e9d53cb37c1f7b624a05c2f7" target="_blank">ccebd25</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -406,7 +417,6 @@ Ignored files:
 Untracked files:
     Untracked:  MRSS_delta_correlations.png
     Untracked:  analysis/OLD/
-    Untracked:  analysis/PreSSc_Synovitis.Rmd
     Untracked:  analysis/RESOLVE_SSc_Olink_Analysis_Clean-2.Rmd
     Untracked:  analysis/RESOLVE_SSc_Pathway_Enrichment-2.Rmd
     Untracked:  analysis/SSc_ILD_Onset_Analysis_Clean.Rmd
@@ -426,6 +436,7 @@ Untracked files:
     Untracked:  output/ILD_Onset_Analysis/
     Untracked:  output/Pietro_InterferonScore/
     Untracked:  output/PreSScArthritis_vs_SScArthritis/
+    Untracked:  output/PreSSc_Synovitis/
     Untracked:  output/RESOLVE/
     Untracked:  output/RESOLVE_clean/
     Untracked:  output/SSc_Olink_Analysis_Clean-2/
@@ -490,6 +501,23 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/0310e62bbaac71020fd41451c726860fcfecb2d8/docs/index.html" target="_blank">0310e62</a>
+</td>
+<td>
+astridhofman7
+</td>
+<td>
+2026-07-09
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd

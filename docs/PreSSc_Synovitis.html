@@ -13,7 +13,7 @@
 
 <meta name="date" content="2026-07-09" />
 
-<title>PreSScArthritis_vs_SScArthritis</title>
+<title>SSc Proteomics: Joint Synovitis Analysis</title>
 
 <script src="site_libs/header-attrs-2.31/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -370,7 +370,8 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">PreSScArthritis_vs_SScArthritis</h1>
+<h1 class="title toc-ignore">SSc Proteomics: Joint Synovitis
+Analysis</h1>
 <h4 class="author">Analysis Script</h4>
 <h4 class="date">2026-07-09</h4>
 
@@ -638,12 +639,11 @@ have uncommitted changes.
 <div id="versions" class="tab-pane fade">
 <p>
 These are the previous versions of the repository in which changes were
-made to the R Markdown
-(<code>analysis/PreSScArthritis_vs_SScArthritis.Rmd</code>) and HTML
-(<code>docs/PreSScArthritis_vs_SScArthritis.html</code>) files. If
-you’ve configured a remote Git repository (see
-<code>?wflow_git_remote</code>), click on the hyperlinks in the table
-below to view the files as they were in that past version.
+made to the R Markdown (<code>analysis/PreSSc_Synovitis.Rmd</code>) and
+HTML (<code>docs/PreSSc_Synovitis.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
 </p>
 <div class="table-responsive">
 <table class="table table-condensed table-hover">
@@ -669,61 +669,10 @@ Message
 <tbody>
 <tr>
 <td>
-html
-</td>
-<td>
-<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/0310e62bbaac71020fd41451c726860fcfecb2d8/docs/PreSScArthritis_vs_SScArthritis.html" target="_blank">0310e62</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-<td>
-Build site.
-</td>
-</tr>
-<tr>
-<td>
-html
-</td>
-<td>
-<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/7c20ceb8962780b89f1aae5ea3bfb28fa77f6607/docs/PreSScArthritis_vs_SScArthritis.html" target="_blank">7c20ceb</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-<td>
-Build site.
-</td>
-</tr>
-<tr>
-<td>
-html
-</td>
-<td>
-<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/42f73a60fcedf240f692737917e039f87c66c506/docs/PreSScArthritis_vs_SScArthritis.html" target="_blank">42f73a6</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-<td>
-Build site.
-</td>
-</tr>
-<tr>
-<td>
 Rmd
 </td>
 <td>
-<a href="https://github.com/astridhofman7/SerumProteomics/blob/b41b521e27189682ed945bbd9e999d98a7924b56/analysis/PreSScArthritis_vs_SScArthritis.Rmd" target="_blank">b41b521</a>
+<a href="https://github.com/astridhofman7/SerumProteomics/blob/ccebd25475290806e9d53cb37c1f7b624a05c2f7/analysis/PreSSc_Synovitis.Rmd" target="_blank">ccebd25</a>
 </td>
 <td>
 astridhofman7
@@ -732,41 +681,7 @@ astridhofman7
 2026-07-09
 </td>
 <td>
-updates
-</td>
-</tr>
-<tr>
-<td>
-html
-</td>
-<td>
-<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/0564f4978744c9bab5c8f5f355b1feb139797e11/docs/PreSScArthritis_vs_SScArthritis.html" target="_blank">0564f49</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-<td>
-Build site.
-</td>
-</tr>
-<tr>
-<td>
-Rmd
-</td>
-<td>
-<a href="https://github.com/astridhofman7/SerumProteomics/blob/996454360a7229667f6e98cf59fbc8f6b2ae0649/analysis/PreSScArthritis_vs_SScArthritis.Rmd" target="_blank">9964543</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-<td>
-updates
+Updating
 </td>
 </tr>
 </tbody>
@@ -778,14 +693,12 @@ updates
 </div>
 <div id="overview" class="section level2">
 <h2>Overview</h2>
-<p>Binary comparison of serum Olink proteomics between <strong>veSSc
-(very early SSc)</strong> and <strong>SSc (established SSc)</strong>
-patients with arthritis, adjusting for immunosuppression status.</p>
-<p><strong>Analysis:</strong> - Binary limma: Diagnosis (veSSc vs SSc) +
-Immunosuppression covariate - Filter for AveExpr &gt; 0, recalculate FDR
-- Volcano plot and boxplots for significant hits</p>
-<p><strong>Interpretation:</strong> - Positive logFC = higher in veSSc -
-Negative logFC = higher in SSc (established disease)</p>
+<p>Binary comparison of serum Olink proteomics between SSc patients
+<strong>with vs without joint synovitis</strong>, adjusting for
+immunosuppression status.</p>
+<p><strong>Analysis:</strong> - Binary limma: Joint_synovitis (Yes vs
+No) + Immunosuppression covariate - Filter for AveExpr &gt; 0,
+recalculate FDR - Volcano plot and boxplots for significant hits</p>
 <hr />
 </div>
 <div id="libraries" class="section level1">
@@ -814,14 +727,14 @@ library(ggrepel)        # Label repelling for volcano</code></pre>
 # =============================================================================
 
 # Get script name (without .Rmd extension) for output folder
-script_name &lt;- &quot;PreSScArthritis_vs_SScArthritis&quot;  # Or set manually
+script_name &lt;- &quot;PreSSc_Synovitis&quot;  # Or set manually
 
 # Create output directory: output/&lt;script_name&gt;/
 output_dir &lt;- here::here(&quot;output&quot;, script_name)
 if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
 cat(&quot;Output directory:&quot;, output_dir, &quot;\n&quot;)</code></pre>
-<pre><code>Output directory: /Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/output/PreSScArthritis_vs_SScArthritis </code></pre>
+<pre><code>Output directory: /Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/output/PreSSc_Synovitis </code></pre>
 <hr />
 </div>
 <div id="color-palettes" class="section level1">
@@ -829,9 +742,11 @@ cat(&quot;Output directory:&quot;, output_dir, &quot;\n&quot;)</code></pre>
 <pre class="r"><code># =============================================================================
 # PURPOSE: Define consistent color schemes
 # =============================================================================
+
 colours_class &lt;- c(
-  &quot;veSSc&quot; = &quot;#3498DB&quot;,   # Blue - very early SSc
-  &quot;SSc&quot; = &quot;#E74C3C&quot;      # Red - established SSc
+  &quot;No&quot; = &quot;#3498DB&quot;,    # Blue - No synovitis
+
+  &quot;Yes&quot; = &quot;#E74C3C&quot;    # Red - Has synovitis
 )</code></pre>
 <hr />
 </div>
@@ -842,14 +757,14 @@ colours_class &lt;- c(
 #
 # DATA SOURCES:
 # - Olink: NPX values (normalized protein expression)
-# - Metadata: Clinical variables including Diagnosis (veSSc vs SSc)
+# - Metadata: Clinical variables including Joint_synovitis
 # =============================================================================
 
 # Load Olink data
-olink &lt;- read_parquet(here::here(&quot;data&quot;,&quot;P2024-199-OLI_80_NPX_2024-10-10.parquet&quot;))
+olink &lt;- read_parquet(here::here(&quot;data&quot;, &quot;P2024-199-OLI_80_NPX_2024-10-10.parquet&quot;))
 
-# Load metadata (sheet 2)
-metadata &lt;- read_excel(here::here(&quot;data&quot;,&quot;Metadata_veSSC_vs_SSc_arthritis_final.xlsx&quot;), sheet = 2)
+# Load metadata (sheet 2 contains the arthritis cohort)
+metadata &lt;- read_excel(here::here(&quot;data&quot;, &quot;Metadata_veSSC.xlsx&quot;), sheet = 2)
 
 cat(&quot;Olink samples:&quot;, length(unique(olink$SampleID)), &quot;\n&quot;)</code></pre>
 <pre><code>Olink samples: 95 </code></pre>
@@ -864,7 +779,7 @@ cat(&quot;Olink samples:&quot;, length(unique(olink$SampleID)), &quot;\n&quot;)<
 #
 # STEPS:
 # 1. Create matching patient IDs
-# 2. Filter for patients with Diagnosis data
+# 2. Filter for patients with Joint_synovitis data
 # 3. Merge Olink with metadata
 # =============================================================================
 
@@ -875,24 +790,24 @@ olink$patient &lt;- trimws(tolower(olink$SampleID))
 # Merge Olink with metadata
 merged &lt;- merge(olink, metadata, by = &quot;patient&quot;, all.x = TRUE)
 
-# Filter for patients with Diagnosis data (exclude controls)
+# Filter for patients with Joint_synovitis data (exclude controls)
 filtered_df &lt;- merged %&gt;%
-  filter(!is.na(Diagnosis))
+  filter(!is.na(Joint_synovitis))
 
-# Ensure Diagnosis is a factor with proper labels
-# Assuming 0 = veSSc, 1 = SSc (check your data!)
-filtered_df$Diagnosis &lt;- factor(filtered_df$Diagnosis, 
-                                 levels = c(&quot;veSSc&quot;, &quot;SSc&quot;))
+# Ensure Joint_synovitis is a factor
+filtered_df$Joint_synovitis &lt;- factor(filtered_df$Joint_synovitis, 
+                                       levels = c(0, 1), 
+                                       labels = c(&quot;No&quot;, &quot;Yes&quot;))
 
-cat(&quot;Patients with diagnosis data:&quot;, length(unique(filtered_df$patient)), &quot;\n&quot;)</code></pre>
-<pre><code>Patients with diagnosis data: 18 </code></pre>
-<pre class="r"><code>cat(&quot;\nDiagnosis breakdown:\n&quot;)</code></pre>
+cat(&quot;Patients with synovitis data:&quot;, length(unique(filtered_df$patient)), &quot;\n&quot;)</code></pre>
+<pre><code>Patients with synovitis data: 18 </code></pre>
+<pre class="r"><code>cat(&quot;\nJoint synovitis breakdown:\n&quot;)</code></pre>
 <pre><code>
-Diagnosis breakdown:</code></pre>
-<pre class="r"><code>print(table(filtered_df$Diagnosis[!duplicated(filtered_df$patient)]))</code></pre>
+Joint synovitis breakdown:</code></pre>
+<pre class="r"><code>print(table(filtered_df$Joint_synovitis[!duplicated(filtered_df$patient)]))</code></pre>
 <pre><code>
-veSSc   SSc 
-    9     9 </code></pre>
+ No Yes 
+  9   9 </code></pre>
 <hr />
 </div>
 <div id="create-expression-matrix" class="section level1">
@@ -943,53 +858,55 @@ filtered_metadata &lt;- metadata %&gt;%
   filter(tolower(trimws(Barcode)) %in% colnames(data_matrix2)) %&gt;%
   mutate(patient = tolower(trimws(Barcode)))
 
-# Extract Visit_Year from Visit_Date
-filtered_metadata$Visit_Year &lt;- factor(format(as.Date(filtered_metadata$Visit_Date), &quot;%Y&quot;))
-
 # Convert Immunosuppression to factor
 filtered_metadata$Imunosuppression &lt;- factor(filtered_metadata$Imunosuppression)
 
-# Convert Diagnosis to factor
-filtered_metadata$Diagnosis &lt;- factor(filtered_metadata$Diagnosis,
-                                       levels = c(&quot;veSSc&quot;, &quot;SSc&quot;))
+# Convert Joint_synovitis to factor
+filtered_metadata$Joint_synovitis &lt;- factor(filtered_metadata$Joint_synovitis,
+                                             levels = c(0, 1),
+                                             labels = c(&quot;No&quot;, &quot;Yes&quot;))
 
-cat(&quot;Metadata prepared for&quot;, nrow(filtered_metadata), &quot;samples\n&quot;)</code></pre>
+# =============================================================================
+# EXTRACT VISIT YEAR FROM DATE
+# =============================================================================
+
+# Extract year from Visit_Date
+filtered_metadata$Visit_Year &lt;- factor(format(filtered_metadata$Visit_Date, &quot;%Y&quot;))
+
+cat(&quot;Visit Year distribution:\n&quot;)</code></pre>
+<pre><code>Visit Year distribution:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Visit_Year))</code></pre>
+<pre><code>
+2014 2018 2019 2020 2021 2022 
+   3    3    3    3    3    3 </code></pre>
+<pre class="r"><code># Check for confounding with Joint_synovitis
+cat(&quot;\nVisit Year by Joint Synovitis:\n&quot;)</code></pre>
+<pre><code>
+Visit Year by Joint Synovitis:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Visit_Year, filtered_metadata$Joint_synovitis))</code></pre>
+<pre><code>      
+       No Yes
+  2014  2   1
+  2018  2   1
+  2019  1   2
+  2020  2   1
+  2021  1   2
+  2022  1   2</code></pre>
+<pre class="r"><code>cat(&quot;Metadata prepared for&quot;, nrow(filtered_metadata), &quot;samples\n&quot;)</code></pre>
 <pre><code>Metadata prepared for 18 samples</code></pre>
-<pre class="r"><code>cat(&quot;\nDiagnosis:\n&quot;)</code></pre>
+<pre class="r"><code>cat(&quot;Joint synovitis:\n&quot;)</code></pre>
+<pre><code>Joint synovitis:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Joint_synovitis))</code></pre>
 <pre><code>
-Diagnosis:</code></pre>
-<pre class="r"><code>print(table(filtered_metadata$Diagnosis))</code></pre>
-<pre><code>
-veSSc   SSc 
-    9     9 </code></pre>
+ No Yes 
+  9   9 </code></pre>
 <pre class="r"><code>cat(&quot;\nImmunosuppression:\n&quot;)</code></pre>
 <pre><code>
 Immunosuppression:</code></pre>
 <pre class="r"><code>print(table(filtered_metadata$Imunosuppression))</code></pre>
 <pre><code>
  0  1 
- 8 10 </code></pre>
-<pre class="r"><code>cat(&quot;\nVisit Year:\n&quot;)</code></pre>
-<pre><code>
-Visit Year:</code></pre>
-<pre class="r"><code>print(table(filtered_metadata$Visit_Year))</code></pre>
-<pre><code>
-2014 2016 2018 2019 2020 2021 2022 
-   2    3    2    4    2    2    3 </code></pre>
-<pre class="r"><code># Check for confounding
-cat(&quot;\nVisit Year by Diagnosis:\n&quot;)</code></pre>
-<pre><code>
-Visit Year by Diagnosis:</code></pre>
-<pre class="r"><code>print(table(filtered_metadata$Visit_Year, filtered_metadata$Diagnosis))</code></pre>
-<pre><code>      
-       veSSc SSc
-  2014     1   1
-  2016     0   3
-  2018     1   1
-  2019     2   2
-  2020     1   1
-  2021     2   0
-  2022     2   1</code></pre>
+11  7 </code></pre>
 <hr />
 </div>
 <div id="sample-alignment-critical" class="section level1">
@@ -1006,7 +923,7 @@ Visit Year by Diagnosis:</code></pre>
 cat(&quot;=== BEFORE alignment ===\n&quot;)</code></pre>
 <pre><code>=== BEFORE alignment ===</code></pre>
 <pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
-<pre><code>Matrix columns (first 5): 111625731103 111687222106 113098682811 114004005004 114087788816 </code></pre>
+<pre><code>Matrix columns (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
 <pre class="r"><code>cat(&quot;Metadata patients (first 5):&quot;, head(filtered_metadata$patient, 5), &quot;\n&quot;)</code></pre>
 <pre><code>Metadata patients (first 5): 114004005004 116556343103 116798454201 113098682811 s681401 </code></pre>
 <pre class="r"><code>cat(&quot;Aligned:&quot;, all(colnames(data_matrix2) == filtered_metadata$patient), &quot;\n\n&quot;)</code></pre>
@@ -1017,9 +934,9 @@ filtered_metadata &lt;- filtered_metadata[match(colnames(data_matrix2), filtered
 cat(&quot;=== AFTER alignment ===\n&quot;)</code></pre>
 <pre><code>=== AFTER alignment ===</code></pre>
 <pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
-<pre><code>Matrix columns (first 5): 111625731103 111687222106 113098682811 114004005004 114087788816 </code></pre>
+<pre><code>Matrix columns (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
 <pre class="r"><code>cat(&quot;Metadata patients (first 5):&quot;, head(filtered_metadata$patient, 5), &quot;\n&quot;)</code></pre>
-<pre><code>Metadata patients (first 5): 111625731103 111687222106 113098682811 114004005004 114087788816 </code></pre>
+<pre><code>Metadata patients (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
 <pre class="r"><code>cat(&quot;Aligned:&quot;, all(colnames(data_matrix2) == filtered_metadata$patient), &quot;\n&quot;)</code></pre>
 <pre><code>Aligned: TRUE </code></pre>
 <pre class="r"><code># STOP if not aligned
@@ -1029,40 +946,48 @@ cat(&quot;\n✓ Alignment verified\n&quot;)</code></pre>
 ✓ Alignment verified</code></pre>
 <hr />
 </div>
-<div id="binary-analysis-vessc-vs-ssc" class="section level1">
-<h1>9. Binary Analysis: veSSc vs SSc</h1>
+<div id="binary-analysis-joint-synovitis-vs-no-synovitis"
+class="section level1">
+<h1>9. Binary Analysis: Joint Synovitis vs No Synovitis</h1>
 <pre class="r"><code># =============================================================================
 # PURPOSE: Test for differential protein abundance
 #
-# MODEL: ~0 + Diagnosis + Imunosuppression
-# - ~0 + Diagnosis: estimate mean for each group (not intercept)
+# MODEL: ~0 + Joint_synovitis + Imunosuppression
+# - ~0 + Joint_synovitis: estimate mean for each group (not intercept)
 # - + Imunosuppression: adjust for immunosuppression status
 #
-# CONTRAST: veSSc - SSc
-# - Positive logFC = higher in veSSc (very early disease)
-# - Negative logFC = higher in SSc (established disease)
+# CONTRAST: Synovitis_Yes - Synovitis_No
+# - Positive logFC = higher in patients WITH synovitis
+# - Negative logFC = lower in patients WITH synovitis
 # =============================================================================
 
 # Create design matrix
-design &lt;- model.matrix(~0 + Diagnosis + Imunosuppression, data = filtered_metadata)
-colnames(design) &lt;- gsub(&quot;Diagnosis&quot;, &quot;&quot;, colnames(design))
+design &lt;- model.matrix(~0 + Joint_synovitis + Visit_Year, data = filtered_metadata)
+colnames(design) &lt;- gsub(&quot;Joint_synovitis&quot;, &quot;&quot;, colnames(design))
 
 cat(&quot;Design matrix:\n&quot;)</code></pre>
 <pre><code>Design matrix:</code></pre>
 <pre class="r"><code>print(head(design))</code></pre>
-<pre><code>  veSSc SSc Imunosuppression1
-1     1   0                 0
-2     0   1                 0
-3     1   0                 0
-4     1   0                 1
-5     0   1                 1
-6     0   1                 0</code></pre>
+<pre><code>  No Yes Visit_Year2018 Visit_Year2019 Visit_Year2020 Visit_Year2021
+1  1   0              1              0              0              0
+2  0   1              1              0              0              0
+3  1   0              1              0              0              0
+4  1   0              0              1              0              0
+5  0   1              0              1              0              0
+6  0   1              0              1              0              0
+  Visit_Year2022
+1              0
+2              0
+3              0
+4              0
+5              0
+6              0</code></pre>
 <pre class="r"><code># Fit model
 fit &lt;- lmFit(data_matrix2, design)
 
-# Create contrast: veSSc - SSc (positive = higher in veSSc)
+# Create contrast: Yes - No (positive = higher in synovitis)
 contrast.matrix &lt;- makeContrasts(
-  veSSc_vs_SSc = veSSc - SSc,
+  Synovitis_Yes_vs_No = Yes - No,
   levels = design
 )
 
@@ -1077,109 +1002,18 @@ results &lt;- results %&gt;% rownames_to_column(var = &quot;OlinkID&quot;)
 cat(&quot;\nTop 10 proteins by p-value:\n&quot;)</code></pre>
 <pre><code>
 Top 10 proteins by p-value:</code></pre>
-<pre class="r"><code>print(head(results, 50))</code></pre>
-<pre><code>    OlinkID      logFC      AveExpr         t      P.Value  adj.P.Val
-1  OID45320  1.6404807  0.382849537  5.904354 1.621483e-05 0.07940783
-2  OID45436  1.6508248  0.973213473  5.613749 2.919406e-05 0.07940783
-3  OID45127  1.5364006  0.131493757  5.384370 4.678493e-05 0.08483668
-4  OID40033  2.6710146  1.506438353  5.234531 6.388003e-05 0.08687685
-5  OID40088  4.1800384 -2.654516287  5.098856 8.487743e-05 0.09234664
-6  OID41809  1.5975314  0.348628829  4.593040 2.489568e-04 0.18986297
-7  OID44057  1.4284246  0.590745841  4.478900 3.183730e-04 0.18986297
-8  OID44803  1.0489270  1.077007519  4.465343 3.278316e-04 0.18986297
-9  OID44447  1.1426928  0.117619183  4.432935 3.516150e-04 0.18986297
-10 OID44441  1.2432415  0.273754165  4.402516 3.755314e-04 0.18986297
-11 OID41350  1.7227002  0.705988738  4.392318 3.839141e-04 0.18986297
-12 OID45038  1.0211467  0.438194513  4.167374 6.257304e-04 0.26286410
-13 OID44776  2.0547545 -0.110094470  4.165588 6.281679e-04 0.26286410
-14 OID42471  0.9689847  1.240795341  4.112072 7.058554e-04 0.26878219
-15 OID40786  1.1055924  0.290986690  4.089708 7.411274e-04 0.26878219
-16 OID45337  1.2204649  2.877504789  4.012337 8.774419e-04 0.28658952
-17 OID42102  1.3750605 -0.044373334  4.002961 8.955923e-04 0.28658952
-18 OID45387  1.1439356  0.348058181  3.962561 9.782164e-04 0.29563873
-19 OID40443  3.5716582  3.387412025  3.914189 1.087287e-03 0.31130755
-20 OID45276  0.9301781  1.047613653  3.764668 1.507830e-03 0.39549594
-21 OID44840  1.0016646  4.910244193  3.755143 1.539574e-03 0.39549594
-22 OID44817  0.8391626  0.129935272  3.674924 1.834856e-03 0.39549594
-23 OID40505  1.2379975  0.796318539  3.673248 1.841593e-03 0.39549594
-24 OID45373  0.9127192  0.407059567  3.650181 1.936875e-03 0.39549594
-25 OID45023  1.0400998  1.269130757  3.645613 1.956316e-03 0.39549594
-26 OID43057  1.8420938 -0.890128564  3.636053 1.997639e-03 0.39549594
-27 OID45150  0.9034042  0.426808243  3.591778 2.200655e-03 0.39549594
-28 OID44176  0.6856179  0.218948670  3.561345 2.351978e-03 0.39549594
-29 OID45115  0.8087897  0.142628394  3.559299 2.362515e-03 0.39549594
-30 OID45500  0.7557133 -0.002481716  3.552689 2.396881e-03 0.39549594
-31 OID45460  0.9465047 -0.976169989  3.545799 2.433228e-03 0.39549594
-32 OID45078  0.9550630  0.557886372  3.505560 2.656721e-03 0.39549594
-33 OID44609  0.7322261 -0.132373238  3.489735 2.750098e-03 0.39549594
-34 OID43633  0.9779352  0.557559840  3.486092 2.772048e-03 0.39549594
-35 OID43074 -1.2054404  0.039713854 -3.477278 2.825888e-03 0.39549594
-36 OID43702  0.9295265  0.736631552  3.474695 2.841855e-03 0.39549594
-37 OID44255  0.8476401  0.819998105  3.468174 2.882581e-03 0.39549594
-38 OID44124 -0.8688994  0.787378031 -3.458025 2.947112e-03 0.39549594
-39 OID44466  0.8493154  0.753149595  3.438747 3.073658e-03 0.39549594
-40 OID45346  0.8444962  0.549090314  3.425523 3.163563e-03 0.39549594
-41 OID42924  1.7847567 -0.067109015  3.403686 3.317752e-03 0.39549594
-42 OID45481  0.8130756  0.768383637  3.403201 3.321261e-03 0.39549594
-43 OID44036  0.8277830  0.848894044  3.400437 3.341319e-03 0.39549594
-44 OID45195  0.9116867  0.425259460  3.397447 3.363155e-03 0.39549594
-45 OID42608 -1.1321447 -0.145966982 -3.397255 3.364564e-03 0.39549594
-46 OID43565  1.5925046  0.534309661  3.388312 3.430747e-03 0.39549594
-47 OID45468  0.9173631  0.221551000  3.387113 3.439717e-03 0.39549594
-48 OID42949 -0.7296509  0.253737769 -3.374567 3.534985e-03 0.39549594
-49 OID44538  0.6916927  1.086099349  3.362766 3.626971e-03 0.39549594
-50 OID44139 -0.8910587  3.427379696 -3.333210 3.867865e-03 0.39549594
-             B
-1   2.42040323
-2   1.99068104
-3   1.64094450
-4   1.40760590
-5   1.19310443
-6   0.36836276
-7   0.17730947
-8   0.15450936
-9   0.09991689
-10  0.04856093
-11  0.03131855
-12 -0.35182868
-13 -0.35488989
-14 -0.44678214
-15 -0.48525639
-16 -0.61867491
-17 -0.63487481
-18 -0.70474618
-19 -0.78854811
-20 -1.04841906
-21 -1.06500751
-22 -1.20484813
-23 -1.20777118
-24 -1.24801833
-25 -1.25598862
-26 -1.27267249
-27 -1.34996245
-28 -1.40310056
-29 -1.40667338
-30 -1.41821668
-31 -1.43024806
-32 -1.50051877
-33 -1.52815376
-34 -1.53451464
-35 -1.54990678
-36 -1.55441561
-37 -1.56580286
-38 -1.58352227
-39 -1.61717760
-40 -1.64026100
-41 -1.67837043
-42 -1.67921711
-43 -1.68403930
-44 -1.68925671
-45 -1.68959204
-46 -1.70519516
-47 -1.70728687
-48 -1.72917218
-49 -1.74975353
-50 -1.80128189</code></pre>
+<pre class="r"><code>print(head(results, 10))</code></pre>
+<pre><code>    OlinkID    logFC     AveExpr        t      P.Value adj.P.Val           B
+1  OID40443 3.948155  3.08819263 5.542876 8.992302e-05 0.2236515  1.07812991
+2  OID42219 2.134699  1.31466179 5.479885 1.001808e-04 0.2236515  1.00149875
+3  OID45127 1.035509  0.22972472 5.235503 1.531233e-04 0.2236515  0.69720631
+4  OID45320 1.475331  0.41505528 5.056936 2.098493e-04 0.2236515  0.46786753
+5  OID42102 1.536748 -0.28393297 5.015502 2.259074e-04 0.2236515  0.41381532
+6  OID41609 3.058887 -2.07751932 4.902403 2.765926e-04 0.2236515  0.26468400
+7  OID40398 2.524298  0.54505687 4.880345 2.877869e-04 0.2236515  0.23532810
+8  OID40232 3.726493 -0.09290828 4.737933 3.723600e-04 0.2467997  0.04371448
+9  OID44893 1.406727 -0.51567629 4.687331 4.083083e-04 0.2467997 -0.02523211
+10 OID41943 1.837012  1.41050109 4.607733 4.723088e-04 0.2569360 -0.13458568</code></pre>
 <hr />
 </div>
 <div id="expression-filtering-fdr-recalculation" class="section level1">
@@ -1206,9 +1040,9 @@ results_filtered &lt;- results %&gt;%
 cat(&quot;Before filtering:&quot;, nrow(results), &quot;proteins\n&quot;)</code></pre>
 <pre><code>Before filtering: 5440 proteins</code></pre>
 <pre class="r"><code>cat(&quot;After AveExpr &gt; 0:&quot;, nrow(results_filtered), &quot;proteins\n&quot;)</code></pre>
-<pre><code>After AveExpr &gt; 0: 3839 proteins</code></pre>
-<pre class="r"><code>cat(&quot;FDR &lt; 0.3:&quot;, sum(results_filtered$adj.P.Val &lt; 0.3), &quot;proteins\n&quot;)</code></pre>
-<pre><code>FDR &lt; 0.3: 16 proteins</code></pre>
+<pre><code>After AveExpr &gt; 0: 3785 proteins</code></pre>
+<pre class="r"><code>cat(&quot;FDR &lt; 0.3:&quot;, sum(results_filtered$adj.P.Val &lt; 0.2), &quot;proteins\n&quot;)</code></pre>
+<pre><code>FDR &lt; 0.3: 4 proteins</code></pre>
 <hr />
 </div>
 <div id="add-gene-names" class="section level1">
@@ -1229,32 +1063,32 @@ results_filtered &lt;- results_filtered %&gt;%
 cat(&quot;Results with gene names:\n&quot;)</code></pre>
 <pre><code>Results with gene names:</code></pre>
 <pre class="r"><code>print(head(results_filtered[, c(&quot;OlinkID&quot;, &quot;Assay&quot;, &quot;logFC&quot;, &quot;P.Value&quot;, &quot;adj.P.Val&quot;)], 15))</code></pre>
-<pre><code>    OlinkID    Assay     logFC      P.Value  adj.P.Val
-1  OID45320       C2 1.6404807 1.621483e-05 0.05603799
-2  OID45436    APOA1 1.6508248 2.919406e-05 0.05603799
-3  OID45127   FGFBP2 1.5364006 4.678493e-05 0.05986912
-4  OID40033  ARL14EP 2.6710146 6.388003e-05 0.06130886
-5  OID41809    SKOR1 1.5975314 2.489568e-04 0.14738462
-6  OID44057      OMG 1.4284246 3.183730e-04 0.14738462
-7  OID44803     NCAN 1.0489270 3.278316e-04 0.14738462
-8  OID44447   ADGRG2 1.1426928 3.516150e-04 0.14738462
-9  OID44441 ADAMTSL5 1.2432415 3.755314e-04 0.14738462
-10 OID41350    JADE3 1.7227002 3.839141e-04 0.14738462
-11 OID45038   B4GAT1 1.0211467 6.257304e-04 0.21837991
-12 OID42471     FLT3 0.9689847 7.058554e-04 0.21886061
-13 OID40786      ALK 1.1055924 7.411274e-04 0.21886061
-14 OID45337    CNDP1 1.2204649 8.774419e-04 0.24060711
-15 OID45387    NCAM1 1.1439356 9.782164e-04 0.25035818</code></pre>
+<pre><code>    OlinkID    Assay     logFC      P.Value adj.P.Val
+1  OID40443    NANOG 3.9481549 8.992302e-05 0.1895922
+2  OID42219  CAMSAP2 2.1346988 1.001808e-04 0.1895922
+3  OID45127   FGFBP2 1.0355093 1.531233e-04 0.1931906
+4  OID45320       C2 1.4753311 2.098493e-04 0.1985699
+5  OID40398    MAST1 2.5242981 2.877869e-04 0.2178547
+6  OID41943  TP53BP2 1.8370118 4.723088e-04 0.2979481
+7  OID40445     NBEA 2.6346826 7.815250e-04 0.3929965
+8  OID40118     CIPC 4.2272777 8.306398e-04 0.3929965
+9  OID43051   SBSPON 0.8383384 1.067807e-03 0.4437049
+10 OID44538    CHMP6 0.7734292 1.373122e-03 0.4437049
+11 OID44840    PDGFD 1.4301941 1.482202e-03 0.4437049
+12 OID42249 CDC42BPG 2.0834779 1.488722e-03 0.4437049
+13 OID40698     UCK1 1.1448915 1.753999e-03 0.4437049
+14 OID42434   EXOSC3 1.8754736 1.768665e-03 0.4437049
+15 OID44993   TOMM20 1.6092548 1.830928e-03 0.4437049</code></pre>
 <hr />
 </div>
 <div id="direction-of-change-summary" class="section level1">
 <h1>12. Direction of Change Summary</h1>
 <pre class="r"><code># =============================================================================
-# PURPOSE: Summarize which proteins are up vs down
+# PURPOSE: Summarize which proteins are up vs down in synovitis
 #
 # INTERPRETATION:
-# - Positive logFC = higher in veSSc (very early disease)
-# - Negative logFC = higher in SSc (established disease)
+# - Positive logFC = higher in patients WITH joint synovitis
+# - Negative logFC = lower in patients WITH joint synovitis
 # =============================================================================
 
 # Define hits
@@ -1263,14 +1097,14 @@ hits &lt;- results_filtered %&gt;% filter(adj.P.Val &lt; 0.3)
 hits_up &lt;- hits %&gt;% filter(logFC &gt; 0)
 hits_down &lt;- hits %&gt;% filter(logFC &lt; 0)
 
-cat(&quot;=== Direction of Change (FDR &lt; 0.3) ===\n\n&quot;)</code></pre>
-<pre><code>=== Direction of Change (FDR &lt; 0.3) ===</code></pre>
-<pre class="r"><code>cat(&quot;Higher in veSSc (positive logFC):&quot;, nrow(hits_up), &quot;\n&quot;)</code></pre>
-<pre><code>Higher in veSSc (positive logFC): 16 </code></pre>
+cat(&quot;=== Direction of Change (FDR &lt; 0.2) ===\n\n&quot;)</code></pre>
+<pre><code>=== Direction of Change (FDR &lt; 0.2) ===</code></pre>
+<pre class="r"><code>cat(&quot;Higher in Synovitis (positive logFC):&quot;, nrow(hits_up), &quot;\n&quot;)</code></pre>
+<pre><code>Higher in Synovitis (positive logFC): 6 </code></pre>
 <pre class="r"><code>if(nrow(hits_up) &gt; 0) cat(&quot;  &quot;, paste(hits_up$Assay, collapse = &quot;, &quot;), &quot;\n\n&quot;)</code></pre>
-<pre><code>   C2, APOA1, FGFBP2, ARL14EP, SKOR1, OMG, NCAN, ADGRG2, ADAMTSL5, JADE3, B4GAT1, FLT3, ALK, CNDP1, NCAM1, NANOG </code></pre>
-<pre class="r"><code>cat(&quot;Higher in SSc (negative logFC):&quot;, nrow(hits_down), &quot;\n&quot;)</code></pre>
-<pre><code>Higher in SSc (negative logFC): 0 </code></pre>
+<pre><code>   NANOG, CAMSAP2, FGFBP2, C2, MAST1, TP53BP2 </code></pre>
+<pre class="r"><code>cat(&quot;Lower in Synovitis (negative logFC):&quot;, nrow(hits_down), &quot;\n&quot;)</code></pre>
+<pre><code>Lower in Synovitis (negative logFC): 0 </code></pre>
 <pre class="r"><code>if(nrow(hits_down) &gt; 0) cat(&quot;  &quot;, paste(hits_down$Assay, collapse = &quot;, &quot;), &quot;\n&quot;)</code></pre>
 <hr />
 </div>
@@ -1287,21 +1121,21 @@ cat(&quot;=== Direction of Change (FDR &lt; 0.3) ===\n\n&quot;)</code></pre>
 results_filtered &lt;- results_filtered %&gt;%
   mutate(
     sig_category = case_when(
-      adj.P.Val &lt; 0.3 &amp; logFC &gt; 0.5 ~ &quot;Up in veSSc&quot;,
-      adj.P.Val &lt; 0.3 &amp; logFC &lt; -0.5 ~ &quot;Up in SSc&quot;,
+      adj.P.Val &lt; 0.3 &amp; logFC &gt; 0.5 ~ &quot;Up in Synovitis&quot;,
+      adj.P.Val &lt; 0.2 &amp; logFC &lt; -0.5 ~ &quot;Down in Synovitis&quot;,
       TRUE ~ &quot;NS&quot;
     )
   )
 
 # Select top hits to label
 top_hits &lt;- results_filtered %&gt;%
-  filter(adj.P.Val &lt; 0.3) %&gt;%
+  filter(adj.P.Val &lt; 0.2) %&gt;%
   arrange(P.Value) %&gt;%
   head(15)
 
 # Colors
-colors &lt;- c(&quot;Up in veSSc&quot; = &quot;#3498DB&quot;,
-            &quot;Up in SSc&quot; = &quot;#E74C3C&quot;, 
+colors &lt;- c(&quot;Up in Synovitis&quot; = &quot;#E74C3C&quot;,
+            &quot;Down in Synovitis&quot; = &quot;#3498DB&quot;, 
             &quot;NS&quot; = &quot;#CCCCCC&quot;)
 
 # Create volcano plot
@@ -1319,8 +1153,8 @@ volcano &lt;- ggplot(results_filtered, aes(x = logFC, y = -log10(P.Value))) +
   geom_hline(yintercept = -log10(0.05), linetype = &quot;dashed&quot;, color = &quot;gray40&quot;) +
   scale_color_manual(values = colors, name = &quot;&quot;) +
   labs(
-    title = &quot;veSSc vs SSc (Arthritis Patients)&quot;,
-    subtitle = &quot;Positive logFC = higher in veSSc (very early disease)&quot;,
+    title = &quot;Joint Synovitis vs No Synovitis&quot;,
+    subtitle = &quot;Positive logFC = higher in synovitis patients&quot;,
     x = expression(Log[2]~Fold~Change),
     y = expression(-Log[10]~P-value)
   ) +
@@ -1332,51 +1166,14 @@ volcano &lt;- ggplot(results_filtered, aes(x = logFC, y = -log10(P.Value))) +
   )
 
 # Save
-ggsave(file.path(output_dir, &quot;volcano_veSSc_vs_SSc.pdf&quot;), volcano, width = 8, height = 7)
+ggsave(file.path(output_dir, &quot;volcano_synovitis.pdf&quot;), volcano, width = 8, height = 7)
 
 print(volcano)</code></pre>
-<p><img src="figure/PreSScArthritis_vs_SScArthritis.Rmd/volcano-1.png" alt="" width="2400" style="display: block; margin: auto;" /></p>
-<p>
-<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-volcano-1">
-Past versions of volcano-1.png
-</button>
-</p>
-<div id="fig-volcano-1" class="collapse">
-<div class="table-responsive">
-<table class="table table-condensed table-hover">
-<thead>
-<tr>
-<th>
-Version
-</th>
-<th>
-Author
-</th>
-<th>
-Date
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<a href="https://github.com/astridhofman7/SerumProteomics/blob/0564f4978744c9bab5c8f5f355b1feb139797e11/docs/figure/PreSScArthritis_vs_SScArthritis.Rmd/volcano-1.png" target="_blank">0564f49</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+<p><img src="figure/PreSSc_Synovitis.Rmd/volcano-1.png" alt="" width="2400" style="display: block; margin: auto;" /></p>
 <hr />
 </div>
-<div id="boxplots-for-top-proteins" class="section level1">
-<h1>14. Boxplots for Top Proteins</h1>
+<div id="boxplots-for-significant-proteins" class="section level1">
+<h1>14. Boxplots for Significant Proteins</h1>
 <pre class="r"><code># =============================================================================
 # PURPOSE: Visualize expression of top proteins
 # =============================================================================
@@ -1389,7 +1186,7 @@ olink_wide &lt;- filtered_df %&gt;%
 
 # Merge with metadata
 plot_data_all &lt;- olink_wide %&gt;%
-  inner_join(filtered_metadata %&gt;% dplyr::select(patient, Diagnosis), by = &quot;patient&quot;)
+  inner_join(filtered_metadata %&gt;% dplyr::select(patient, Joint_synovitis), by = &quot;patient&quot;)
 
 # Select top 20 by p-value
 top20 &lt;- results_filtered %&gt;%
@@ -1399,7 +1196,7 @@ top20 &lt;- results_filtered %&gt;%
 # Plot function
 plot_protein_violin &lt;- function(data, protein_name, fdr_value) {
   
-  ggplot(data, aes(x = Diagnosis, y = .data[[protein_name]], fill = Diagnosis)) +
+  ggplot(data, aes(x = Joint_synovitis, y = .data[[protein_name]], fill = Joint_synovitis)) +
     geom_violin(alpha = 0.5, color = NA, trim = FALSE) +
     geom_boxplot(width = 0.2, alpha = 0.9, outlier.shape = NA) +
     geom_jitter(width = 0.1, size = 1.5, alpha = 0.7, color = &quot;black&quot;) +
@@ -1436,48 +1233,11 @@ for (i in 1:nrow(top20)) {
 combined_plot &lt;- plot_grid(plotlist = plot_list, ncol = 4, align = &quot;hv&quot;)
 
 # Save
-ggsave(file.path(output_dir, &quot;boxplots_veSSc_vs_SSc_top20.pdf&quot;), 
+ggsave(file.path(output_dir, &quot;boxplots_synovitis_top20.pdf&quot;), 
        combined_plot, width = 12, height = 15)
 
 print(combined_plot)</code></pre>
-<p><img src="figure/PreSScArthritis_vs_SScArthritis.Rmd/boxplots-1.png" alt="" width="3600" style="display: block; margin: auto;" /></p>
-<p>
-<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-boxplots-1">
-Past versions of boxplots-1.png
-</button>
-</p>
-<div id="fig-boxplots-1" class="collapse">
-<div class="table-responsive">
-<table class="table table-condensed table-hover">
-<thead>
-<tr>
-<th>
-Version
-</th>
-<th>
-Author
-</th>
-<th>
-Date
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<a href="https://github.com/astridhofman7/SerumProteomics/blob/0564f4978744c9bab5c8f5f355b1feb139797e11/docs/figure/PreSScArthritis_vs_SScArthritis.Rmd/boxplots-1.png" target="_blank">0564f49</a>
-</td>
-<td>
-astridhofman7
-</td>
-<td>
-2026-07-09
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+<p><img src="figure/PreSSc_Synovitis.Rmd/boxplots-1.png" alt="" width="3600" style="display: block; margin: auto;" /></p>
 <hr />
 </div>
 <div id="export-results" class="section level1">
@@ -1488,26 +1248,26 @@ astridhofman7
 
 # All results (filtered)
 write.csv(results_filtered, 
-          file.path(output_dir, &quot;results_veSSc_vs_SSc_all.csv&quot;), 
+          file.path(output_dir, &quot;results_Synovitis_vs_NoSynovitis_all.csv&quot;), 
           row.names = FALSE)
 
 # Significant hits only
 write.csv(hits, 
-          file.path(output_dir, &quot;results_veSSc_vs_SSc_FDR02.csv&quot;), 
+          file.path(output_dir, &quot;results_Synovitis_vs_NoSynovitis_FDR02.csv&quot;), 
           row.names = FALSE)
 
 cat(&quot;Results exported to:&quot;, output_dir, &quot;\n&quot;)</code></pre>
-<pre><code>Results exported to: /Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/output/PreSScArthritis_vs_SScArthritis </code></pre>
+<pre><code>Results exported to: /Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/output/PreSSc_Synovitis </code></pre>
 <pre class="r"><code>cat(&quot;Files:\n&quot;)</code></pre>
 <pre><code>Files:</code></pre>
-<pre class="r"><code>cat(&quot;  - results_veSSc_vs_SSc_all.csv\n&quot;)</code></pre>
-<pre><code>  - results_veSSc_vs_SSc_all.csv</code></pre>
-<pre class="r"><code>cat(&quot;  - results_veSSc_vs_SSc_FDR02.csv\n&quot;)</code></pre>
-<pre><code>  - results_veSSc_vs_SSc_FDR02.csv</code></pre>
-<pre class="r"><code>cat(&quot;  - volcano_veSSc_vs_SSc.pdf\n&quot;)</code></pre>
-<pre><code>  - volcano_veSSc_vs_SSc.pdf</code></pre>
-<pre class="r"><code>cat(&quot;  - boxplots_veSSc_vs_SSc_top20.pdf\n&quot;)</code></pre>
-<pre><code>  - boxplots_veSSc_vs_SSc_top20.pdf</code></pre>
+<pre class="r"><code>cat(&quot;  - results_Synovitis_vs_NoSynovitis_all.csv\n&quot;)</code></pre>
+<pre><code>  - results_Synovitis_vs_NoSynovitis_all.csv</code></pre>
+<pre class="r"><code>cat(&quot;  - results_Synovitis_vs_NoSynovitis_FDR02.csv\n&quot;)</code></pre>
+<pre><code>  - results_Synovitis_vs_NoSynovitis_FDR02.csv</code></pre>
+<pre class="r"><code>cat(&quot;  - volcano_synovitis.pdf\n&quot;)</code></pre>
+<pre><code>  - volcano_synovitis.pdf</code></pre>
+<pre class="r"><code>cat(&quot;  - boxplots_synovitis_top20.pdf\n&quot;)</code></pre>
+<pre><code>  - boxplots_synovitis_top20.pdf</code></pre>
 <hr />
 </div>
 <div id="session-info" class="section level1">
