@@ -13,7 +13,7 @@ editor_options:
 ### PreSSc
 
 1. [PreSSc Synovitis vs. No Synovitis](PreSSc_Synovitis.html)
-2. [PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
+2. [PreSSc Arthritis vs. SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
 
 ### RESOLVE
 
