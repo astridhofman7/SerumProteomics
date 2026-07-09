@@ -1,0 +1,541 @@
+---
+title: "PreSScArthritis_vs_SScArthritis"
+author: "Analysis Script"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, dpi = 300)
+```
+
+## Overview
+
+Binary comparison of serum Olink proteomics between **veSSc (very early SSc)** and **SSc (established SSc)** patients with arthritis, adjusting for immunosuppression status.
+
+**Analysis:**
+- Binary limma: Diagnosis (veSSc vs SSc) + Immunosuppression covariate
+- Filter for AveExpr > 0, recalculate FDR
+- Volcano plot and boxplots for significant hits
+
+**Interpretation:**
+- Positive logFC = higher in veSSc
+- Negative logFC = higher in SSc (established disease)
+
+---
+
+# 1. Libraries
+
+```{r libraries}
+# =============================================================================
+# REQUIRED PACKAGES
+# =============================================================================
+
+library(arrow)          # Read parquet files
+library(readxl)         # Read Excel metadata
+library(here)           # Project-relative paths
+library(dplyr)          # Data manipulation
+library(tidyr)          # Reshaping data
+library(tibble)         # rownames_to_column
+library(limma)          # Differential expression analysis
+library(ggplot2)        # Plotting
+library(ggpubr)         # stat_compare_means
+library(cowplot)        # Combine plots
+library(ggrepel)        # Label repelling for volcano
+```
+
+---
+
+# 2. Setup Output Directory
+
+```{r setup-output}
+# =============================================================================
+# PURPOSE: Create output directory for results
+# =============================================================================
+
+# Get script name (without .Rmd extension) for output folder
+script_name <- "PreSScArthritis_vs_SScArthritis"  # Or set manually
+
+# Create output directory: output/<script_name>/
+output_dir <- here::here("output", script_name)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+cat("Output directory:", output_dir, "\n")
+```
+
+---
+
+# 3. Color Palettes
+
+```{r colors}
+# =============================================================================
+# PURPOSE: Define consistent color schemes
+# =============================================================================
+colours_class <- c(
+  "veSSc" = "#3498DB",   # Blue - very early SSc
+  "SSc" = "#E74C3C"      # Red - established SSc
+)
+```
+
+---
+
+# 4. Load Data
+
+```{r load-data}
+# =============================================================================
+# PURPOSE: Load Olink NPX data and clinical metadata
+#
+# DATA SOURCES:
+# - Olink: NPX values (normalized protein expression)
+# - Metadata: Clinical variables including Diagnosis (veSSc vs SSc)
+# =============================================================================
+
+# Load Olink data
+olink <- read_parquet("/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/P2024-199-OLI_80_NPX_2024-10-10.parquet")
+
+# Load metadata (sheet 2)
+metadata <- read_excel("/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx", sheet = 2)
+
+cat("Olink samples:", length(unique(olink$SampleID)), "\n")
+cat("Metadata samples:", nrow(metadata), "\n")
+```
+
+---
+
+# 5. Data Preparation
+
+```{r data-prep}
+# =============================================================================
+# PURPOSE: Prepare and merge data
+#
+# STEPS:
+# 1. Create matching patient IDs
+# 2. Filter for patients with Diagnosis data
+# 3. Merge Olink with metadata
+# =============================================================================
+
+# Create matching IDs (trim whitespace, lowercase)
+metadata$patient <- trimws(tolower(metadata$Barcode))
+olink$patient <- trimws(tolower(olink$SampleID))
+
+# Merge Olink with metadata
+merged <- merge(olink, metadata, by = "patient", all.x = TRUE)
+
+# Filter for patients with Diagnosis data (exclude controls)
+filtered_df <- merged %>%
+  filter(!is.na(Diagnosis))
+
+# Ensure Diagnosis is a factor with proper labels
+# Assuming 0 = veSSc, 1 = SSc (check your data!)
+filtered_df$Diagnosis <- factor(filtered_df$Diagnosis, 
+                                 levels = c("veSSc", "SSc"))
+
+cat("Patients with diagnosis data:", length(unique(filtered_df$patient)), "\n")
+cat("\nDiagnosis breakdown:\n")
+print(table(filtered_df$Diagnosis[!duplicated(filtered_df$patient)]))
+```
+
+---
+
+# 6. Create Expression Matrix
+
+```{r create-matrix}
+# =============================================================================
+# PURPOSE: Create protein expression matrix for limma
+#
+# WHY: limma needs a matrix with:
+# - Rows = proteins (OlinkID)
+# - Columns = samples (patients)
+# - Values = NPX (expression)
+# =============================================================================
+
+# Create wide matrix
+matrix_data <- filtered_df %>%
+  dplyr::select(patient, OlinkID, NPX) %>%
+  distinct() %>%
+  pivot_wider(names_from = patient, values_from = NPX)
+
+# Convert to matrix
+data_matrix <- as.data.frame(matrix_data)
+rownames(data_matrix) <- data_matrix$OlinkID
+data_matrix <- data_matrix[, -1]  # Remove OlinkID column
+data_matrix <- as.matrix(data_matrix)
+
+# Convert to numeric
+data_matrix2 <- apply(data_matrix, 2, as.numeric)
+rownames(data_matrix2) <- rownames(data_matrix)
+
+# Remove control samples (keep only patient samples)
+keep_samples <- !grepl("neg|sample|plate|control", colnames(data_matrix2), ignore.case = TRUE)
+data_matrix2 <- data_matrix2[, keep_samples]
+
+cat("Expression matrix dimensions:", nrow(data_matrix2), "proteins x", ncol(data_matrix2), "samples\n")
+```
+
+---
+
+# 7. Prepare Metadata for limma
+
+```{r prep-metadata}
+# =============================================================================
+# PURPOSE: Prepare filtered metadata matching matrix columns
+#
+# CRITICAL: Metadata rows must match matrix columns EXACTLY
+# =============================================================================
+
+# Get unique metadata per patient
+filtered_metadata <- metadata %>%
+  filter(tolower(trimws(Barcode)) %in% colnames(data_matrix2)) %>%
+  mutate(patient = tolower(trimws(Barcode)))
+
+# Extract Visit_Year from Visit_Date
+filtered_metadata$Visit_Year <- factor(format(as.Date(filtered_metadata$Visit_Date), "%Y"))
+
+# Convert Immunosuppression to factor
+filtered_metadata$Imunosuppression <- factor(filtered_metadata$Imunosuppression)
+
+# Convert Diagnosis to factor
+filtered_metadata$Diagnosis <- factor(filtered_metadata$Diagnosis,
+                                       levels = c("veSSc", "SSc"))
+
+cat("Metadata prepared for", nrow(filtered_metadata), "samples\n")
+cat("\nDiagnosis:\n")
+print(table(filtered_metadata$Diagnosis))
+cat("\nImmunosuppression:\n")
+print(table(filtered_metadata$Imunosuppression))
+cat("\nVisit Year:\n")
+print(table(filtered_metadata$Visit_Year))
+
+# Check for confounding
+cat("\nVisit Year by Diagnosis:\n")
+print(table(filtered_metadata$Visit_Year, filtered_metadata$Diagnosis))
+```
+
+---
+
+# 8. Sample Alignment (CRITICAL)
+
+```{r alignment}
+# =============================================================================
+# PURPOSE: Ensure matrix columns and metadata rows are in the same order
+#
+# WHY THIS IS CRITICAL:
+# limma matches by POSITION, not by name!
+# If column 1 of matrix is patient A but row 1 of metadata is patient B,
+# limma will assign patient B's group to patient A's expression data.
+# =============================================================================
+
+cat("=== BEFORE alignment ===\n")
+cat("Matrix columns (first 5):", head(colnames(data_matrix2), 5), "\n")
+cat("Metadata patients (first 5):", head(filtered_metadata$patient, 5), "\n")
+cat("Aligned:", all(colnames(data_matrix2) == filtered_metadata$patient), "\n\n")
+
+# Reorder metadata to match matrix columns
+filtered_metadata <- filtered_metadata[match(colnames(data_matrix2), filtered_metadata$patient), ]
+
+cat("=== AFTER alignment ===\n")
+cat("Matrix columns (first 5):", head(colnames(data_matrix2), 5), "\n")
+cat("Metadata patients (first 5):", head(filtered_metadata$patient, 5), "\n")
+cat("Aligned:", all(colnames(data_matrix2) == filtered_metadata$patient), "\n")
+
+# STOP if not aligned
+stopifnot("Sample alignment failed!" = all(colnames(data_matrix2) == filtered_metadata$patient))
+cat("\n✓ Alignment verified\n")
+```
+
+---
+
+# 9. Binary Analysis: veSSc vs SSc
+
+```{r limma-analysis}
+# =============================================================================
+# PURPOSE: Test for differential protein abundance
+#
+# MODEL: ~0 + Diagnosis + Imunosuppression
+# - ~0 + Diagnosis: estimate mean for each group (not intercept)
+# - + Imunosuppression: adjust for immunosuppression status
+#
+# CONTRAST: veSSc - SSc
+# - Positive logFC = higher in veSSc (very early disease)
+# - Negative logFC = higher in SSc (established disease)
+# =============================================================================
+
+# Create design matrix
+design <- model.matrix(~0 + Diagnosis + Imunosuppression, data = filtered_metadata)
+colnames(design) <- gsub("Diagnosis", "", colnames(design))
+
+cat("Design matrix:\n")
+print(head(design))
+
+# Fit model
+fit <- lmFit(data_matrix2, design)
+
+# Create contrast: veSSc - SSc (positive = higher in veSSc)
+contrast.matrix <- makeContrasts(
+  veSSc_vs_SSc = veSSc - SSc,
+  levels = design
+)
+
+# Apply contrast and empirical Bayes
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit2 <- eBayes(fit2)
+
+# Extract results
+results <- topTable(fit2, coef = 1, number = Inf, adjust.method = "BH")
+results <- results %>% rownames_to_column(var = "OlinkID")
+
+cat("\nTop 10 proteins by p-value:\n")
+print(head(results, 50))
+```
+
+---
+
+# 10. Expression Filtering & FDR Recalculation
+
+```{r filter-fdr}
+# =============================================================================
+# PURPOSE: Filter for reliably detected proteins and recalculate FDR
+#
+# WHY FILTER ON AveExpr:
+# - Low-expressed proteins are noisy and unreliable
+# - AveExpr > 0 keeps proteins with detectable signal
+#
+# WHY RECALCULATE FDR:
+# - Original adj.P.Val was calculated on ALL proteins
+# - After filtering, fewer tests → less harsh correction
+# - This is valid because AveExpr is INDEPENDENT of the test statistic
+# =============================================================================
+
+# Filter and recalculate FDR
+results_filtered <- results %>%
+  filter(AveExpr > 0) %>%
+  mutate(adj.P.Val = p.adjust(P.Value, method = "BH")) %>%
+  arrange(P.Value)
+
+cat("Before filtering:", nrow(results), "proteins\n")
+cat("After AveExpr > 0:", nrow(results_filtered), "proteins\n")
+cat("FDR < 0.3:", sum(results_filtered$adj.P.Val < 0.3), "proteins\n")
+```
+
+---
+
+# 11. Add Gene Names
+
+```{r add-gene-names}
+# =============================================================================
+# PURPOSE: Add human-readable gene names to results
+# =============================================================================
+
+# Get unique OlinkID to Assay mapping
+gene_map <- filtered_df %>%
+  dplyr::select(OlinkID, Assay) %>%
+  distinct()
+
+# Merge with results
+results_filtered <- results_filtered %>%
+  left_join(gene_map, by = "OlinkID")
+
+cat("Results with gene names:\n")
+print(head(results_filtered[, c("OlinkID", "Assay", "logFC", "P.Value", "adj.P.Val")], 15))
+```
+
+---
+
+# 12. Direction of Change Summary
+
+```{r direction}
+# =============================================================================
+# PURPOSE: Summarize which proteins are up vs down
+#
+# INTERPRETATION:
+# - Positive logFC = higher in veSSc (very early disease)
+# - Negative logFC = higher in SSc (established disease)
+# =============================================================================
+
+# Define hits
+hits <- results_filtered %>% filter(adj.P.Val < 0.3)
+
+hits_up <- hits %>% filter(logFC > 0)
+hits_down <- hits %>% filter(logFC < 0)
+
+cat("=== Direction of Change (FDR < 0.3) ===\n\n")
+cat("Higher in veSSc (positive logFC):", nrow(hits_up), "\n")
+if(nrow(hits_up) > 0) cat("  ", paste(hits_up$Assay, collapse = ", "), "\n\n")
+
+cat("Higher in SSc (negative logFC):", nrow(hits_down), "\n")
+if(nrow(hits_down) > 0) cat("  ", paste(hits_down$Assay, collapse = ", "), "\n")
+```
+
+---
+
+# 13. Volcano Plot
+
+```{r volcano, fig.width=8, fig.height=7}
+# =============================================================================
+# PURPOSE: Visualize differential expression across all proteins
+#
+# X-axis: log2 fold change (effect size)
+# Y-axis: -log10 p-value (significance)
+# =============================================================================
+
+# Add significance categories
+results_filtered <- results_filtered %>%
+  mutate(
+    sig_category = case_when(
+      adj.P.Val < 0.3 & logFC > 0.5 ~ "Up in veSSc",
+      adj.P.Val < 0.3 & logFC < -0.5 ~ "Up in SSc",
+      TRUE ~ "NS"
+    )
+  )
+
+# Select top hits to label
+top_hits <- results_filtered %>%
+  filter(adj.P.Val < 0.3) %>%
+  arrange(P.Value) %>%
+  head(15)
+
+# Colors
+colors <- c("Up in veSSc" = "#3498DB",
+            "Up in SSc" = "#E74C3C", 
+            "NS" = "#CCCCCC")
+
+# Create volcano plot
+volcano <- ggplot(results_filtered, aes(x = logFC, y = -log10(P.Value))) +
+  geom_point(aes(color = sig_category), size = 1.5, alpha = 0.6) +
+  geom_text_repel(
+    data = top_hits,
+    aes(label = Assay),
+    size = 3,
+    max.overlaps = 20,
+    segment.color = "gray50",
+    segment.size = 0.3
+  ) +
+  geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "gray40") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "gray40") +
+  scale_color_manual(values = colors, name = "") +
+  labs(
+    title = "veSSc vs SSc (Arthritis Patients)",
+    subtitle = "Positive logFC = higher in veSSc (very early disease)",
+    x = expression(Log[2]~Fold~Change),
+    y = expression(-Log[10]~P-value)
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+    legend.position = "top"
+  )
+
+# Save
+ggsave(file.path(output_dir, "volcano_veSSc_vs_SSc.pdf"), volcano, width = 8, height = 7)
+
+print(volcano)
+```
+
+---
+
+# 14. Boxplots for Top Proteins
+
+```{r boxplots, fig.width=12, fig.height=15}
+# =============================================================================
+# PURPOSE: Visualize expression of top proteins
+# =============================================================================
+
+# Create plot data (wide format with metadata)
+olink_wide <- filtered_df %>%
+  dplyr::select(patient, Assay, NPX) %>%
+  distinct() %>%
+  pivot_wider(names_from = Assay, values_from = NPX)
+
+# Merge with metadata
+plot_data_all <- olink_wide %>%
+  inner_join(filtered_metadata %>% dplyr::select(patient, Diagnosis), by = "patient")
+
+# Select top 20 by p-value
+top20 <- results_filtered %>%
+  arrange(P.Value) %>%
+  head(20)
+
+# Plot function
+plot_protein_violin <- function(data, protein_name, fdr_value) {
+  
+  ggplot(data, aes(x = Diagnosis, y = .data[[protein_name]], fill = Diagnosis)) +
+    geom_violin(alpha = 0.5, color = NA, trim = FALSE) +
+    geom_boxplot(width = 0.2, alpha = 0.9, outlier.shape = NA) +
+    geom_jitter(width = 0.1, size = 1.5, alpha = 0.7, color = "black") +
+    scale_fill_manual(values = colours_class) +
+    stat_compare_means(method = "wilcox.test", label = "p.format", 
+                       label.x.npc = 0.5, label.y.npc = 0.95, size = 3) +
+    labs(
+      title = protein_name,
+      subtitle = paste0("FDR = ", round(fdr_value, 3)),
+      x = NULL,
+      y = "NPX"
+    ) +
+    theme_classic(base_size = 11) +
+    theme(
+      plot.title = element_text(face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+      legend.position = "none"
+    )
+}
+
+# Generate plots
+plot_list <- list()
+
+for (i in 1:nrow(top20)) {
+  protein <- top20$Assay[i]
+  fdr <- top20$adj.P.Val[i]
+  
+  if (protein %in% colnames(plot_data_all)) {
+    plot_list[[protein]] <- plot_protein_violin(plot_data_all, protein, fdr)
+  }
+}
+
+# Combine plots
+combined_plot <- plot_grid(plotlist = plot_list, ncol = 4, align = "hv")
+
+# Save
+ggsave(file.path(output_dir, "boxplots_veSSc_vs_SSc_top20.pdf"), 
+       combined_plot, width = 12, height = 15)
+
+print(combined_plot)
+```
+
+---
+
+# 15. Export Results
+
+```{r export}
+# =============================================================================
+# PURPOSE: Save results for downstream analysis
+# =============================================================================
+
+# All results (filtered)
+write.csv(results_filtered, 
+          file.path(output_dir, "results_veSSc_vs_SSc_all.csv"), 
+          row.names = FALSE)
+
+# Significant hits only
+write.csv(hits, 
+          file.path(output_dir, "results_veSSc_vs_SSc_FDR02.csv"), 
+          row.names = FALSE)
+
+cat("Results exported to:", output_dir, "\n")
+cat("Files:\n")
+cat("  - results_veSSc_vs_SSc_all.csv\n")
+cat("  - results_veSSc_vs_SSc_FDR02.csv\n")
+cat("  - volcano_veSSc_vs_SSc.pdf\n")
+cat("  - boxplots_veSSc_vs_SSc_top20.pdf\n")
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```
