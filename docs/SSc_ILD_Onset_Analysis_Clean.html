@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Analysis Script" />
+
+<meta name="date" content="2026-07-09" />
+
+<title>SSc Proteomics: Serum Biomarkers of ILD Onset</title>
+
+<script src="site_libs/header-attrs-2.31/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">RESOLVE_SerumProteomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics">
+    <span class="fab fa-github"></span>
+     
+    Source code
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">SSc Proteomics: Serum Biomarkers of ILD
+Onset</h1>
+<h4 class="author">Analysis Script</h4>
+<h4 class="date">2026-07-09</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-07-09
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>RESOLVE_SerumProteomics/</code>
+<span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250204code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250204)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250204code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250204)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7RESOLVESerumProteomicstreee31997185657951e1fff923f03bbca99a1d3c56btargetblanke319971a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics/tree/e31997185657951e1fff923f03bbca99a1d3c56b" target="_blank">e319971</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7RESOLVESerumProteomicstreee31997185657951e1fff923f03bbca99a1d3c56btargetblanke319971a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics/tree/e31997185657951e1fff923f03bbca99a1d3c56b" target="_blank">e319971</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+    Ignored:    Screenshot-2024-08-22-at-11.31.50_files/
+    Ignored:    analysis/.DS_Store
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+    Ignored:    output/3.1_veSSc_Athritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis/
+    Ignored:    output/Analysis_Cosimo/
+    Ignored:    output/SSc Proteomics: Pathway Enrichment Analysis/
+
+Untracked files:
+    Untracked:  MRSS_delta_correlations.png
+    Untracked:  analysis/OLD/
+    Untracked:  analysis/PreSSc/
+    Untracked:  analysis/SSc_ILD_Onset_Analysis_Clean.Rmd
+    Untracked:  analysis/SSc_ILD_Onset_Pathway_Enrichment.Rmd
+    Untracked:  analysis/SSc_Olink_Analysis_Clean-2.Rmd
+    Untracked:  analysis/SSc_Pathway_Enrichment-2.Rmd
+    Untracked:  analysis/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean.Rmd
+    Untracked:  analysis/Screenshot 2024-08-22 at 11.31.50.Rmd
+    Untracked:  analysis/output/
+    Untracked:  code/11102024_PreliminaryLook_Preprocessing.Rmd
+    Untracked:  code/14102024_MetaData.csv
+    Untracked:  code/Final_FinalList_ArthritisControls_2024.08.15.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_CB3groups.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_COSIMO.xlsx
+    Untracked:  data/Metadata_veSSC.xlsx
+    Untracked:  data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx
+    Untracked:  data/P2024-199-OLI_80_NPX_2024-10-10.parquet
+    Untracked:  data/PEA/
+    Untracked:  data/PRECISE_Pietro.xlsx
+    Untracked:  data/metadata.xlsx
+    Untracked:  output/ILD_Onset_Analysis/
+    Untracked:  output/Pietro_InterferonScore/
+    Untracked:  output/RESOLVE/
+    Untracked:  output/RESOLVE_clean/
+    Untracked:  output/SSc_Olink_Analysis_Clean-2/
+    Untracked:  output/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean/
+    Untracked:  output/UpdatedAnalysisPipelineCosimo/
+    Untracked:  output/arthritis_analysis/
+    Untracked:  site_libs/
+
+Unstaged changes:
+    Modified:   .Rprofile
+    Modified:   .gitattributes
+    Modified:   .gitignore
+    Modified:   README.md
+    Modified:   RESOLVE_SerumProteomics.Rproj
+    Modified:   _workflowr.yml
+    Modified:   analysis/_site.yml
+    Modified:   analysis/about.Rmd
+    Modified:   analysis/index.Rmd
+    Modified:   analysis/license.Rmd
+    Modified:   code/README.md
+    Modified:   data/README.md
+    Modified:   output/README.md
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>This analysis identifies serum proteins associated with ILD onset in
+SSc patients.</p>
+<p><strong>Analytical approach:</strong></p>
+<table>
+<colgroup>
+<col width="28%" />
+<col width="34%" />
+<col width="37%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Analysis</th>
+<th>Comparison</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Binary</td>
+<td>ILD onset vs No ILD onset</td>
+<td>Identifies proteins differentially expressed between groups</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Covariates:</strong></p>
+<ul>
+<li><code>entrytime</code> (year of study entry): Included to adjust for
+potential batch effects</li>
+</ul>
+<hr />
+</div>
+<div id="libraries" class="section level1">
+<h1>1. Libraries</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Load required R packages
+#
+# Data I/O:
+#   - arrow: Read parquet files (Olink output format)
+#   - readxl: Read Excel metadata
+#   - here: Relative file paths for reproducibility
+#
+# Data manipulation:
+#   - dplyr: Data wrangling (filter, mutate, select, etc.)
+#   - tidyr: Reshaping data (long &lt;-&gt; wide format)
+#   - tibble: For rownames_to_column conversion
+#
+# Statistical analysis:
+#   - limma: Linear models for differential expression
+#            Designed for microarray/proteomics; handles small samples well
+#            Uses empirical Bayes to borrow information across proteins
+#
+# Visualization:
+#   - ggplot2: General plotting
+#   - EnhancedVolcano: Publication-quality volcano plots
+#   - enrichR: Pathway enrichment analysis
+# =============================================================================
+
+library(arrow)
+library(readxl)
+library(here)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(limma)
+library(ggplot2)
+library(EnhancedVolcano)
+library(enrichR)</code></pre>
+<hr />
+</div>
+<div id="data-loading" class="section level1">
+<h1>2. Data Loading</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Load raw data files
+#
+# Two data sources:
+# 1. NPX data: Olink&#39;s Normalized Protein eXpression values (log2 scale)
+#    - Already normalized across plates by Olink
+#    - Long format: one row per protein-sample combination
+#
+# 2. Metadata: Clinical data including ILD onset status
+# =============================================================================
+
+# UPDATE THESE PATHS to your local files
+olink &lt;- read_parquet(here::here(&quot;data&quot;, &quot;P2024-199-OLI_80_NPX_2024-10-10.parquet&quot;))
+metadata &lt;- read_excel(here::here(&quot;data&quot;, &quot;ASTRID_ILDonset_PROTEOMIC_COSIMO.xlsx&quot;), sheet = 1)
+
+cat(&quot;Olink data:&quot;, nrow(olink), &quot;rows\n&quot;)</code></pre>
+<pre><code>Olink data: 516800 rows</code></pre>
+<pre class="r"><code>cat(&quot;Metadata:&quot;, nrow(metadata), &quot;samples\n&quot;)</code></pre>
+<pre><code>Metadata: 22 samples</code></pre>
+<hr />
+</div>
+<div id="data-preparation" class="section level1">
+<h1>3. Data Preparation</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Merge proteomics data with clinical metadata
+#
+# WHY: NPX data contains only sample IDs and protein values.
+#      We need to link these to clinical outcomes (ILD onset)
+#      to test which proteins associate with disease progression.
+#
+# KEY STEPS:
+# 1. Create matching ID columns for merge
+# 2. Remove unnecessary columns that cause issues
+# 3. Merge NPX with metadata
+# 4. Filter to samples with clinical data
+# =============================================================================
+
+# Remove columns that are not needed and may cause issues
+metadata$`Id Visit V2018` &lt;- NULL
+
+# Create matching ID columns
+# WHY: Olink uses &quot;SampleID&quot;, metadata uses &quot;Barcode&quot; — same values, different names
+metadata$patient &lt;- metadata$Barcode
+olink$patient &lt;- olink$SampleID
+
+# Merge NPX with metadata
+merged &lt;- merge(olink, metadata, by = &quot;patient&quot;, all = TRUE)
+
+# Keep only samples with clinical data (DPS = disease status) OR plate controls
+# WHY: Plate controls (CTRL samples) are needed for QC but have no clinical data
+#      Samples without DPS cannot be used in the analysis
+filtered_df &lt;- merged %&gt;%
+  filter(!is.na(DPS) | grepl(&quot;CTRL&quot;, SampleID))
+
+cat(&quot;Merged data:&quot;, nrow(merged), &quot;rows\n&quot;)</code></pre>
+<pre><code>Merged data: 516800 rows</code></pre>
+<pre class="r"><code>cat(&quot;Filtered data:&quot;, nrow(filtered_df), &quot;rows\n&quot;)</code></pre>
+<pre><code>Filtered data: 201280 rows</code></pre>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Prepare clinical metadata for statistical modeling
+#
+# KEY STEPS:
+# 1. Create ILD status variable from numeric indicator
+# 2. Convert categorical variables to factors
+# 3. Handle entry time (for batch effect adjustment)
+# =============================================================================
+
+# Create readable ILD status variable
+# WHY: ILDonset_1yes0no is numeric (1/0); we need a factor for modeling
+metadata$ild_status &lt;- ifelse(metadata$ILDonset_1yes0no == 1, &quot;ILDonset&quot;, &quot;NoILDonset&quot;)
+
+# Factor categorical variables for limma
+# WHY: limma uses factor levels to define contrasts
+metadata$ILDonset_1yes0no &lt;- factor(metadata$ILDonset_1yes0no)
+metadata$DPS &lt;- factor(metadata$DPS)
+
+# Extract entry year for batch effect adjustment
+# WHY: Year of sample collection may introduce batch effects
+#      (different reagent lots, operators, storage times)
+metadata$entrytime &lt;- substr(metadata$Eingangsdt., 1, 4)
+metadata$entrytime &lt;- factor(metadata$entrytime)
+
+cat(&quot;ILD status distribution:\n&quot;)</code></pre>
+<pre><code>ILD status distribution:</code></pre>
+<pre class="r"><code>print(table(metadata$ild_status))</code></pre>
+<pre><code>
+  ILDonset NoILDonset 
+        11         11 </code></pre>
+<pre class="r"><code>cat(&quot;\nEntry year distribution:\n&quot;)</code></pre>
+<pre><code>
+Entry year distribution:</code></pre>
+<pre class="r"><code>print(table(metadata$entrytime))</code></pre>
+<pre><code>
+2013 2014 2016 2017 2018 2019 2020 2022 2023 
+   1    2    2    3    2    6    1    4    1 </code></pre>
+<hr />
+</div>
+<div id="expression-matrix-creation" class="section level1">
+<h1>4. Expression Matrix Creation</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Reshape NPX data from long to wide format for limma
+#
+# WHY: Olink outputs data in &quot;long&quot; format (one row per protein-sample)
+#      limma requires a matrix: rows = proteins, columns = samples
+#      This is the standard format for differential expression analysis
+# =============================================================================
+
+# Extract the three columns we need
+matrix_df &lt;- as.data.frame(cbind(
+  filtered_df$patient, 
+  filtered_df$NPX, 
+  filtered_df$OlinkID
+))
+colnames(matrix_df) &lt;- c(&quot;Patient&quot;, &quot;Value&quot;, &quot;Protein&quot;)
+
+# Reshape: long → wide (proteins as rows, patients as columns)
+wide_data &lt;- tidyr::pivot_wider(matrix_df, names_from = Patient, values_from = Value)
+wide_data &lt;- as.data.frame(wide_data)
+
+# Set protein IDs as rownames (limma convention)
+rownames(wide_data) &lt;- wide_data$Protein
+
+# Remove non-sample columns (Protein column, plate controls, NA columns)
+# WHY: We only want patient samples in the expression matrix
+cols_to_remove &lt;- c(&quot;Protein&quot;)
+# Also identify plate control columns (contain &quot;CTRL&quot; or are NA)
+ctrl_cols &lt;- grep(&quot;CTRL|CONTROL&quot;, colnames(wide_data), value = TRUE)
+na_cols &lt;- colnames(wide_data)[colnames(wide_data) == &quot;NA&quot;]
+cols_to_remove &lt;- c(cols_to_remove, ctrl_cols, na_cols)
+
+data &lt;- wide_data[, !(colnames(wide_data) %in% cols_to_remove), drop = FALSE]
+
+# Convert to numeric matrix
+# WHY: pivot_wider creates character columns; limma needs numeric
+data_matrix &lt;- as.matrix(data)
+data_matrix2 &lt;- apply(data_matrix, 2, as.numeric)
+rownames(data_matrix2) &lt;- rownames(data_matrix)
+
+cat(&quot;Expression matrix:&quot;, nrow(data_matrix2), &quot;proteins x&quot;, ncol(data_matrix2), &quot;samples\n&quot;)</code></pre>
+<pre><code>Expression matrix: 5440 proteins x 22 samples</code></pre>
+<hr />
+</div>
+<div id="sample-alignment-critical" class="section level1">
+<h1>5. Sample Alignment (CRITICAL)</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Ensure expression matrix columns match metadata rows
+#
+# WHY THIS IS CRITICAL:
+# limma assumes row i of the design matrix corresponds to column i of the 
+# expression matrix. If these are misaligned, you&#39;re testing the wrong 
+# samples against the wrong clinical outcomes — results will be meaningless.
+#
+# This is the #1 source of errors in differential expression analysis!
+# =============================================================================
+
+# First, filter metadata to only include samples in the expression matrix
+metadata_aligned &lt;- metadata %&gt;%
+  filter(Barcode %in% colnames(data_matrix2))
+
+# Check alignment BEFORE fixing
+cat(&quot;BEFORE alignment:\n&quot;)</code></pre>
+<pre><code>BEFORE alignment:</code></pre>
+<pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
+<pre><code>Matrix columns (first 5): 112107808410 112645837208 113246727508 113318097718 113472719307 </code></pre>
+<pre class="r"><code>cat(&quot;Metadata Barcode (first 5):&quot;, head(metadata_aligned$Barcode, 5), &quot;\n&quot;)</code></pre>
+<pre><code>Metadata Barcode (first 5): S675701 118016208009 113472719307 S692302 118149252410 </code></pre>
+<pre class="r"><code>cat(&quot;Aligned:&quot;, identical(colnames(data_matrix2), metadata_aligned$Barcode), &quot;\n\n&quot;)</code></pre>
+<pre><code>Aligned: FALSE </code></pre>
+<pre class="r"><code># Reorder BOTH to ensure alignment
+# Method: Sort both by the same ID
+data_matrix2 &lt;- data_matrix2[, order(colnames(data_matrix2))]
+metadata_aligned &lt;- metadata_aligned[order(metadata_aligned$Barcode), ]
+
+# Verify alignment AFTER fixing
+cat(&quot;AFTER alignment:\n&quot;)</code></pre>
+<pre><code>AFTER alignment:</code></pre>
+<pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
+<pre><code>Matrix columns (first 5): 112107808410 112645837208 113246727508 113318097718 113472719307 </code></pre>
+<pre class="r"><code>cat(&quot;Metadata Barcode (first 5):&quot;, head(metadata_aligned$Barcode, 5), &quot;\n&quot;)</code></pre>
+<pre><code>Metadata Barcode (first 5): 112107808410 112645837208 113246727508 113318097718 113472719307 </code></pre>
+<pre class="r"><code>cat(&quot;Aligned:&quot;, identical(colnames(data_matrix2), metadata_aligned$Barcode), &quot;\n&quot;)</code></pre>
+<pre><code>Aligned: TRUE </code></pre>
+<pre class="r"><code># STOP if not aligned — do not proceed with wrong results
+stopifnot(&quot;Sample alignment failed!&quot; = identical(colnames(data_matrix2), metadata_aligned$Barcode))
+cat(&quot;\n✓ Alignment verified\n&quot;)</code></pre>
+<pre><code>
+✓ Alignment verified</code></pre>
+<hr />
+</div>
+<div id="binary-analysis-ild-onset-vs-no-ild-onset"
+class="section level1">
+<h1>6. Binary Analysis: ILD Onset vs No ILD Onset</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Test each protein for differential expression between groups
+#
+# WHY LIMMA:
+# - Designed for small sample sizes (borrows strength across proteins)
+# - Empirical Bayes shrinkage stabilizes variance estimates
+# - Well-validated for proteomics data
+#
+# MODEL: ~0 + ild_status + entrytime
+# - &quot;~0 + ild_status&quot;: Estimate mean for each group separately (no intercept)
+#   This makes contrast specification cleaner
+# - &quot;+ entrytime&quot;: Adjust for year of entry (batch effect)
+#
+# CONTRAST: ILDonset - NoILDonset
+# - Positive logFC = higher in ILD onset patients
+# - Negative logFC = lower in ILD onset patients (higher in controls)
+# =============================================================================
+
+# Set factor with reference level
+# WHY: &quot;NoILDonset&quot; first means positive logFC = higher in ILDonset
+metadata_aligned$ild_status &lt;- factor(metadata_aligned$ild_status, 
+                                       levels = c(&quot;NoILDonset&quot;, &quot;ILDonset&quot;))
+
+# Create design matrix
+design &lt;- model.matrix(~0 + ild_status + entrytime, data = metadata_aligned)
+
+# Clean column names (remove &quot;ild_status&quot; prefix for readability)
+colnames(design) &lt;- gsub(&quot;ild_status&quot;, &quot;&quot;, colnames(design))
+
+cat(&quot;Design matrix:\n&quot;)</code></pre>
+<pre><code>Design matrix:</code></pre>
+<pre class="r"><code>print(head(design))</code></pre>
+<pre><code>  NoILDonset ILDonset entrytime2014 entrytime2016 entrytime2017 entrytime2018
+1          0        1             0             0             0             1
+2          0        1             0             0             0             1
+3          0        1             0             0             0             0
+4          0        1             0             0             0             0
+5          1        0             0             0             0             0
+6          0        1             0             0             0             0
+  entrytime2019 entrytime2020 entrytime2022 entrytime2023
+1             0             0             0             0
+2             0             0             0             0
+3             1             0             0             0
+4             1             0             0             0
+5             1             0             0             0
+6             1             0             0             0</code></pre>
+<pre class="r"><code>cat(&quot;\nSamples per group:\n&quot;)</code></pre>
+<pre><code>
+Samples per group:</code></pre>
+<pre class="r"><code>print(table(metadata_aligned$ild_status))</code></pre>
+<pre><code>
+NoILDonset   ILDonset 
+        11         11 </code></pre>
+<pre class="r"><code># Fit linear model
+fit &lt;- lmFit(data_matrix2, design)
+
+# Define contrast: ILD onset vs No ILD onset
+contrast_matrix &lt;- makeContrasts(
+  ILDonset_vs_NoILDonset = ILDonset - NoILDonset,
+  levels = design
+)
+
+# Apply contrast and empirical Bayes moderation
+# WHY eBayes: Shrinks variance estimates toward a common value
+#             This stabilizes results when sample size is small
+fit2 &lt;- contrasts.fit(fit, contrast_matrix)
+fit2 &lt;- eBayes(fit2)
+
+# Extract results
+results &lt;- topTable(fit2, coef = &quot;ILDonset_vs_NoILDonset&quot;, number = Inf, adjust.method = &quot;BH&quot;)
+
+cat(&quot;\nTop 10 proteins:\n&quot;)</code></pre>
+<pre><code>
+Top 10 proteins:</code></pre>
+<pre class="r"><code>print(head(results, 10))</code></pre>
+<pre><code>             logFC    AveExpr         t      P.Value adj.P.Val         B
+OID44222 -2.831862  1.0195417 -6.073276 2.615703e-05 0.1422942 2.4352551
+OID41705  4.436930 -0.3850342  5.528395 6.875639e-05 0.1559076 1.6607787
+OID43477 -1.734716  1.6302091 -5.369728 9.180023e-05 0.1559076 1.4253560
+OID45071 -5.136492 -0.3765906 -5.079505 1.571104e-04 0.1559076 0.9834906
+OID41556  6.184464 -2.6033148  5.047165 1.669176e-04 0.1559076 0.9333718
+OID44280 -2.016844  0.3378656 -4.780493 2.763735e-04 0.1559076 0.5136233
+OID42204  4.502242 -1.6697209  4.760304 2.872288e-04 0.1559076 0.4813870
+OID44712 -2.142294  0.8916622 -4.742688 2.970603e-04 0.1559076 0.4532074
+OID45474 -4.036961  0.1425408 -4.644629 3.585009e-04 0.1559076 0.2954902
+OID45093 -1.836528  0.3825514 -4.631442 3.677112e-04 0.1559076 0.2741699</code></pre>
+<hr />
+</div>
+<div id="expression-filtering-fdr-recalculation" class="section level1">
+<h1>7. Expression Filtering &amp; FDR Recalculation</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Filter for reliably detected proteins and recalculate FDR
+#
+# WHY FILTER ON AveExpr:
+# - Proteins with very low expression (AveExpr &lt; 0) are near detection limit
+# - These have high noise and low statistical power
+# - Removing them reduces multiple testing burden
+#
+# WHY RECALCULATE FDR:
+# - Original adj.P.Val was calculated on ALL proteins
+# - After filtering, we have fewer tests
+# - Recalculating gives appropriate FDR for the filtered set
+# - This is valid because AveExpr is INDEPENDENT of the test statistic
+#   (it&#39;s mean expression across ALL samples, not related to group difference)
+# =============================================================================
+
+results &lt;- results %&gt;%
+  rownames_to_column(var = &quot;OlinkID&quot;)
+
+# Filter for reliably detected proteins and recalculate FDR
+results_filtered &lt;- results %&gt;%
+  filter(AveExpr &gt; 0) %&gt;%
+  mutate(adj.P.Val = p.adjust(P.Value, method = &quot;BH&quot;))
+
+cat(&quot;Before filtering:&quot;, nrow(results), &quot;proteins\n&quot;)</code></pre>
+<pre><code>Before filtering: 5440 proteins</code></pre>
+<pre class="r"><code>cat(&quot;After AveExpr &gt; 0:&quot;, nrow(results_filtered), &quot;proteins\n&quot;)</code></pre>
+<pre><code>After AveExpr &gt; 0: 3611 proteins</code></pre>
+<pre class="r"><code># Apply significance threshold
+hits &lt;- results_filtered %&gt;%
+  filter(adj.P.Val &lt; 0.2) %&gt;%
+  arrange(P.Value)
+
+cat(&quot;Significant hits (FDR &lt; 0.2):&quot;, nrow(hits), &quot;\n&quot;)</code></pre>
+<pre><code>Significant hits (FDR &lt; 0.2): 142 </code></pre>
+<hr />
+</div>
+<div id="add-gene-names" class="section level1">
+<h1>8. Add Gene Names</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Map Olink IDs to gene symbols for interpretability
+#
+# WHY: Olink IDs (e.g., &quot;OID45450&quot;) are internal identifiers
+#      Gene symbols (e.g., &quot;MMP1&quot;) are more meaningful for biology
+# =============================================================================
+
+# Create lookup table from original data
+gene_lookup &lt;- filtered_df %&gt;%
+  distinct(OlinkID, Assay) %&gt;%
+  filter(!is.na(OlinkID))
+
+# Add gene names to results
+results_filtered &lt;- results_filtered %&gt;%
+  left_join(gene_lookup, by = &quot;OlinkID&quot;)
+
+hits &lt;- hits %&gt;%
+  left_join(gene_lookup, by = &quot;OlinkID&quot;)
+
+cat(&quot;Top hits with gene names:\n&quot;)</code></pre>
+<pre><code>Top hits with gene names:</code></pre>
+<pre class="r"><code>print(hits %&gt;% dplyr::select(Assay, logFC, P.Value, adj.P.Val) %&gt;% head(15))</code></pre>
+<pre><code>      Assay     logFC      P.Value  adj.P.Val
+1     SEL1L -2.831862 2.615703e-05 0.09445303
+2      CCN4 -1.734716 9.180023e-05 0.13484984
+3     SPRR3 -2.016844 2.763735e-04 0.13484984
+4     IGSF8 -2.142294 2.970603e-04 0.13484984
+5  LGALS3BP -4.036961 3.585009e-04 0.13484984
+6      CST6 -1.836528 3.677112e-04 0.13484984
+7   KIRREL2 -1.858854 4.444820e-04 0.13484984
+8        XG -2.381583 4.822833e-04 0.13484984
+9    SLURP1 -1.860450 5.359837e-04 0.13484984
+10     RBP5 -2.461739 5.634363e-04 0.13484984
+11     CD5L -3.402266 5.782671e-04 0.13484984
+12     PALM -1.884393 5.981858e-04 0.13484984
+13    IGLC2 -4.317933 7.344459e-04 0.13484984
+14  EPB41L3 -2.218039 7.984435e-04 0.13484984
+15    MYDGF -2.537645 8.141123e-04 0.13484984</code></pre>
+<hr />
+</div>
+<div id="direction-of-change-summary" class="section level1">
+<h1>9. Direction of Change Summary</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Summarize which proteins are up/down in ILD onset
+#
+# INTERPRETATION:
+# - Positive logFC: Higher in ILD onset patients
+# - Negative logFC: Lower in ILD onset patients (higher in controls)
+# =============================================================================
+
+hits_up &lt;- hits %&gt;% filter(logFC &gt; 0)
+hits_down &lt;- hits %&gt;% filter(logFC &lt; 0)
+
+cat(&quot;=== Direction of Change (FDR &lt; 0.2) ===\n\n&quot;)</code></pre>
+<pre><code>=== Direction of Change (FDR &lt; 0.2) ===</code></pre>
+<pre class="r"><code>cat(&quot;Higher in ILD onset:&quot;, nrow(hits_up), &quot;\n&quot;)</code></pre>
+<pre><code>Higher in ILD onset: 8 </code></pre>
+<pre class="r"><code>if(nrow(hits_up) &gt; 0) cat(&quot;  &quot;, paste(hits_up$Assay, collapse = &quot;, &quot;), &quot;\n\n&quot;)</code></pre>
+<pre><code>   DIAPH3, KCNIP3, LRTM1, TTC24, KIAA0232, TCL1B, MAGEC2, WBP2NL </code></pre>
+<pre class="r"><code>cat(&quot;Lower in ILD onset:&quot;, nrow(hits_down), &quot;\n&quot;)</code></pre>
+<pre><code>Lower in ILD onset: 134 </code></pre>
+<pre class="r"><code>if(nrow(hits_down) &gt; 0) cat(&quot;  &quot;, paste(hits_down$Assay, collapse = &quot;, &quot;), &quot;\n&quot;)</code></pre>
+<pre><code>   SEL1L, CCN4, SPRR3, IGSF8, LGALS3BP, CST6, KIRREL2, XG, SLURP1, RBP5, CD5L, PALM, IGLC2, EPB41L3, MYDGF, B2M, ATRN, SHISA5, LY6D, VSIG2, MMP13, ATRAID, PTGDS, APOD, GM2A, CCER2, CD300E, TYRP1, CD40, TNFRSF11A, KLRF1, AGRN, SERPINA3, NECAB1, CD55, SPP1, TAFA5, JTB, SCARB2, SERPINA4, BAMBI, NECAB2, SCRG1, GPR158, JAM3, MAGEA4, RELT, IL4, BTD, CALB1, GUCA2A, CLU, EFNA4, PIK3IP1, MSR1, IGFBP4, TNFRSF19, CD59, CD99, LUZP2, FAM3C, SCARA5, TMPRSS11D, MOG, RNASE6, C1S, CLGN, CEACAM19, ATRX, NECTIN4, TNFRSF1A, EPB41L2, C2orf68, PRRT3, CD300LF, NPPC, DSG3, ENDOU, CLC, LGALS4, CGREF1, TNFRSF14, STAG1, VEGFB, CCN3, KLK11, SNX33, CD38, RNF149, ADAM12, SEZ6, SNCG, ADAM22, ERP27, SUMO1, PALM2, RNASE1, BTN2A1, CALML4, IL17C, PTK7, SCGB1A1, CFD, IGF1R, LTBR, CREB3L1, SLITRK1, MYO10, RNASE10, DBI, NUCB2, PYDC1, WNT9A, FZD8, HABP2, THY1, NPDC1, TNFRSF12A, VMO1, CDH3, PTPRN2, PTPRN, CCDC80, CD7, PCOLCE, TTR, QRICH2, TMSB10, PRG3, JAM2, OGN, HSPG2, LILRB4, CYTL1 </code></pre>
+<hr />
+</div>
+<div id="volcano-plot" class="section level1">
+<h1>10. Volcano Plot</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Visualize effect sizes and significance for all proteins
+#
+# X-axis: logFC (effect size)
+#   - Positive = higher in ILD onset
+#   - Negative = lower in ILD onset
+#
+# Y-axis: -log10(P.Value)
+#   - Higher = more significant
+#   - Note: Using nominal P.Value for visualization; FDR for hit selection
+# =============================================================================
+
+volcano &lt;- EnhancedVolcano(
+  results_filtered,
+  lab = results_filtered$Assay,
+  x = &#39;logFC&#39;,
+  y = &#39;P.Value&#39;,
+  pCutoff = 0.05,
+  FCcutoff = 0.5,
+  labSize = 3,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  title = &quot;ILD Onset vs No ILD Onset&quot;,
+  subtitle = &quot;Positive logFC = higher in ILD onset patients&quot;
+)
+
+print(volcano)</code></pre>
+<p><img src="figure/SSc_ILD_Onset_Analysis_Clean.Rmd/volcano-plot-1.png" alt="" width="960" style="display: block; margin: auto;" /></p>
+<hr />
+</div>
+<div id="boxplots-for-significant-proteins" class="section level1">
+<h1>11. Boxplots for Significant Proteins</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Visualize expression of significant proteins
+#
+# WHY BOXPLOTS:
+# - Show distribution in each group
+# - Easy to interpret for non-statisticians
+# - Wilcoxon p-value shown for binary comparison (different from limma)
+#
+# NOTE: Proteins were selected using limma (adjusts for entrytime);
+#       Wilcoxon shown here is unadjusted binary comparison
+# =============================================================================
+
+# Prepare data for plotting (need long format with patient info)
+plot_data &lt;- filtered_df %&gt;%
+  filter(patient %in% metadata_aligned$Barcode) %&gt;%
+  left_join(metadata_aligned %&gt;% dplyr::select(Barcode, ild_status), 
+            by = c(&quot;patient&quot; = &quot;Barcode&quot;))
+
+# Function to plot one protein
+plot_protein &lt;- function(protein_id, gene_name, fdr_val) {
+  
+  df &lt;- plot_data %&gt;% filter(OlinkID == protein_id)
+  
+  ggplot(df, aes(x = ild_status, y = NPX, fill = ild_status)) +
+    geom_boxplot(width = 0.5, alpha = 0.8, outlier.shape = NA) +
+    geom_jitter(width = 0.15, alpha = 0.6, size = 2) +
+    scale_fill_manual(values = c(&quot;NoILDonset&quot; = &quot;#48639C&quot;, &quot;ILDonset&quot; = &quot;#AF3B6E&quot;)) +
+    stat_compare_means(method = &quot;wilcox.test&quot;, label.x.npc = 0.5, label.y.npc = 0.95) +
+    labs(
+      title = gene_name,
+      subtitle = paste0(&quot;FDR = &quot;, signif(fdr_val, 2)),
+      x = NULL,
+      y = &quot;NPX&quot;
+    ) +
+    theme_classic() +
+    theme(
+      legend.position = &quot;none&quot;,
+      plot.title = element_text(hjust = 0.5, face = &quot;bold&quot;, size = 12),
+      plot.subtitle = element_text(hjust = 0.5, size = 10, color = &quot;gray40&quot;)
+    )
+}
+
+# Plot top hits (up to 12)
+if(nrow(hits) &gt; 0) {
+  library(cowplot)
+  library(ggpubr)
+  
+  n_plots &lt;- min(nrow(hits), 12)
+  plot_list &lt;- list()
+  
+  for(i in 1:n_plots) {
+    plot_list[[i]] &lt;- plot_protein(
+      hits$OlinkID[i], 
+      hits$Assay[i], 
+      hits$adj.P.Val[i]
+    )
+  }
+  
+  combined &lt;- plot_grid(plotlist = plot_list, ncol = 4)
+  print(combined)
+}</code></pre>
+<p><img src="figure/SSc_ILD_Onset_Analysis_Clean.Rmd/boxplots-1.png" alt="" width="1152" style="display: block; margin: auto;" /></p>
+<hr />
+</div>
+<div id="pathway-enrichment" class="section level1">
+<h1>12. Pathway Enrichment</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Identify biological pathways enriched in significant proteins
+#
+# METHOD: Over-representation analysis (ORA) using Enrichr
+#
+# DATABASES:
+# - GO Biological Process: Cellular processes
+# - GO Molecular Function: Biochemical activities
+# - GO Cellular Component: Subcellular localization
+#
+# NOTE: With small protein lists, enrichment may not reach significance
+#       This is normal for targeted panels (vs whole proteome)
+# =============================================================================
+
+if(nrow(hits) &gt;= 3) {
+  
+  proteins &lt;- hits$Assay
+  
+  dbs &lt;- c(&quot;GO_Biological_Process_2023&quot;, 
+           &quot;GO_Molecular_Function_2023&quot;, 
+           &quot;GO_Cellular_Component_2023&quot;)
+  
+  enriched &lt;- enrichr(proteins, dbs)
+  
+  # Show top GO Biological Process results
+  bp_results &lt;- enriched[[&quot;GO_Biological_Process_2023&quot;]]
+  
+  if(nrow(bp_results) &gt; 0 &amp;&amp; any(bp_results$Adjusted.P.value &lt; 0.1)) {
+    plotEnrich(bp_results, 
+               showTerms = 15, 
+               numChar = 60, 
+               y = &quot;Count&quot;, 
+               orderBy = &quot;Adjusted.P.value&quot;, 
+               title = &quot;GO Biological Process Enrichment&quot;)
+  } else {
+    cat(&quot;No significant GO enrichment found (FDR &lt; 0.1)\n&quot;)
+    cat(&quot;This is common with small, targeted protein panels.\n&quot;)
+    cat(&quot;\nTop terms (may not be significant):\n&quot;)
+    print(head(bp_results[, c(&quot;Term&quot;, &quot;Overlap&quot;, &quot;Adjusted.P.value&quot;)], 10))
+  }
+  
+} else {
+  cat(&quot;Too few hits for enrichment analysis (need at least 3 proteins)\n&quot;)
+}</code></pre>
+<pre><code>Uploading data to Enrichr... Done.
+  Querying GO_Biological_Process_2023... Done.
+  Querying GO_Molecular_Function_2023... Done.
+  Querying GO_Cellular_Component_2023... Done.
+Parsing results... Done.</code></pre>
+<p><img src="figure/SSc_ILD_Onset_Analysis_Clean.Rmd/enrichment-1.png" alt="" width="960" style="display: block; margin: auto;" /></p>
+<hr />
+</div>
+<div id="export-results" class="section level1">
+<h1>13. Export Results</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Save results for downstream analysis and reporting
+# =============================================================================
+
+output_dir &lt;- here::here(&quot;output&quot;, &quot;ILD_Onset_Analysis&quot;)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+# Full results (all proteins)
+write.csv(results_filtered, 
+          file.path(output_dir, &quot;results_ILDonset_vs_NoILDonset_all.csv&quot;), 
+          row.names = FALSE)
+
+# Significant hits only
+write.csv(hits, 
+          file.path(output_dir, &quot;results_ILDonset_vs_NoILDonset_FDR02.csv&quot;), 
+          row.names = FALSE)
+
+cat(&quot;Results exported to:&quot;, output_dir, &quot;\n&quot;)</code></pre>
+<pre><code>Results exported to: /Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/output/ILD_Onset_Analysis </code></pre>
+<pre class="r"><code>cat(&quot;Files:\n&quot;)</code></pre>
+<pre><code>Files:</code></pre>
+<pre class="r"><code>cat(&quot;  - results_ILDonset_vs_NoILDonset_all.csv (all proteins)\n&quot;)</code></pre>
+<pre><code>  - results_ILDonset_vs_NoILDonset_all.csv (all proteins)</code></pre>
+<pre class="r"><code>cat(&quot;  - results_ILDonset_vs_NoILDonset_FDR02.csv (FDR &lt; 0.2 hits)\n&quot;)</code></pre>
+<pre><code>  - results_ILDonset_vs_NoILDonset_FDR02.csv (FDR &lt; 0.2 hits)</code></pre>
+<hr />
+</div>
+<div id="session-info" class="section level1">
+<h1>Session Info</h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] ggpubr_0.6.3           cowplot_1.2.0          enrichR_3.4           
+ [4] EnhancedVolcano_1.30.0 ggrepel_0.9.8          ggplot2_4.0.3         
+ [7] limma_3.68.4           tibble_3.3.1           tidyr_1.3.2           
+[10] dplyr_1.2.1            here_1.0.2             readxl_1.5.0          
+[13] arrow_24.0.0           workflowr_1.7.2       
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       rjson_0.2.23       xfun_0.59          bslib_0.11.0      
+ [5] rstatix_0.7.3      processx_3.9.0     callr_3.8.0        vctrs_0.7.3       
+ [9] tools_4.6.1        generics_0.1.4     curl_7.1.0         pkgconfig_2.0.3   
+[13] RColorBrewer_1.1-3 S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5   
+[17] compiler_4.6.1     farver_2.1.2       stringr_1.6.0      git2r_0.36.2      
+[21] statmod_1.5.2      getPass_0.2-4      carData_3.0-6      httpuv_1.6.17     
+[25] htmltools_0.5.9    sass_0.4.10        yaml_2.3.12        Formula_1.2-5     
+[29] car_3.1-5          later_1.4.8        pillar_1.11.1      jquerylib_0.1.4   
+[33] whisker_0.4.1      cachem_1.1.0       abind_1.4-8        tidyselect_1.2.1  
+[37] digest_0.6.39      stringi_1.8.7      purrr_1.2.2        labeling_0.4.3    
+[41] WriteXLS_6.8.0     rprojroot_2.1.1    fastmap_1.2.0      grid_4.6.1        
+[45] cli_3.6.6          magrittr_2.0.5     broom_1.0.13       withr_3.0.3       
+[49] backports_1.5.1    scales_1.4.0       promises_1.5.0     bit64_4.8.2       
+[53] rmarkdown_2.31     httr_1.4.8         bit_4.6.0          otel_0.2.0        
+[57] ggsignif_0.6.4     cellranger_1.1.0   evaluate_1.0.5     knitr_1.51        
+[61] rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1         rstudioapi_0.19.0 
+[65] jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] ggpubr_0.6.3           cowplot_1.2.0          enrichR_3.4           
+ [4] EnhancedVolcano_1.30.0 ggrepel_0.9.8          ggplot2_4.0.3         
+ [7] limma_3.68.4           tibble_3.3.1           tidyr_1.3.2           
+[10] dplyr_1.2.1            here_1.0.2             readxl_1.5.0          
+[13] arrow_24.0.0           workflowr_1.7.2       
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       rjson_0.2.23       xfun_0.59          bslib_0.11.0      
+ [5] rstatix_0.7.3      processx_3.9.0     callr_3.8.0        vctrs_0.7.3       
+ [9] tools_4.6.1        generics_0.1.4     curl_7.1.0         pkgconfig_2.0.3   
+[13] RColorBrewer_1.1-3 S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5   
+[17] compiler_4.6.1     farver_2.1.2       stringr_1.6.0      git2r_0.36.2      
+[21] statmod_1.5.2      getPass_0.2-4      carData_3.0-6      httpuv_1.6.17     
+[25] htmltools_0.5.9    sass_0.4.10        yaml_2.3.12        Formula_1.2-5     
+[29] car_3.1-5          later_1.4.8        pillar_1.11.1      jquerylib_0.1.4   
+[33] whisker_0.4.1      cachem_1.1.0       abind_1.4-8        tidyselect_1.2.1  
+[37] digest_0.6.39      stringi_1.8.7      purrr_1.2.2        labeling_0.4.3    
+[41] WriteXLS_6.8.0     rprojroot_2.1.1    fastmap_1.2.0      grid_4.6.1        
+[45] cli_3.6.6          magrittr_2.0.5     broom_1.0.13       withr_3.0.3       
+[49] backports_1.5.1    scales_1.4.0       promises_1.5.0     bit64_4.8.2       
+[53] rmarkdown_2.31     httr_1.4.8         bit_4.6.0          otel_0.2.0        
+[57] ggsignif_0.6.4     cellranger_1.1.0   evaluate_1.0.5     knitr_1.51        
+[61] rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1         rstudioapi_0.19.0 
+[65] jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

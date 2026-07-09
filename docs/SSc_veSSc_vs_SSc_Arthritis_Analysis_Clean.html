@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Analysis Script" />
+
+<meta name="date" content="2026-07-09" />
+
+<title>SSc Proteomics: Joint Synovitis Analysis</title>
+
+<script src="site_libs/header-attrs-2.31/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">RESOLVE_SerumProteomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics">
+    <span class="fab fa-github"></span>
+     
+    Source code
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">SSc Proteomics: Joint Synovitis
+Analysis</h1>
+<h4 class="author">Analysis Script</h4>
+<h4 class="date">2026-07-09</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-07-09
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 5
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 2
+</p>
+<p>
+<strong>Knit directory:</strong> <code>RESOLVE_SerumProteomics/</code>
+<span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250204code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250204)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250204code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250204)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongabsolute">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>File paths:</strong> absolute </a>
+</p>
+</div>
+<div id="strongFilepathsstrongabsolute" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Using absolute paths to the files within your workflowr project makes it
+difficult for you and others to run your code on a different machine.
+Change the absolute path(s) below to the suggested relative path(s) to
+make your code more reproducible.
+</p>
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th style="text-align:left;">
+absolute
+</th>
+<th style="text-align:left;">
+relative
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/P2024-199-OLI_80_NPX_2024-10-10.parquet
+</td>
+<td style="text-align:left;">
+data/P2024-199-OLI_80_NPX_2024-10-10.parquet
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/Metadata_veSSC.xlsx
+</td>
+<td style="text-align:left;">
+data/Metadata_veSSC.xlsx
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7RESOLVESerumProteomicstreee31997185657951e1fff923f03bbca99a1d3c56btargetblanke319971a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics/tree/e31997185657951e1fff923f03bbca99a1d3c56b" target="_blank">e319971</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7RESOLVESerumProteomicstreee31997185657951e1fff923f03bbca99a1d3c56btargetblanke319971a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/astridhofman7/RESOLVE_SerumProteomics/tree/e31997185657951e1fff923f03bbca99a1d3c56b" target="_blank">e319971</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.DS_Store
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+    Ignored:    output/3.1_veSSc_Athritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis/
+    Ignored:    output/Analysis_Cosimo/
+    Ignored:    output/SSc Proteomics: Pathway Enrichment Analysis/
+
+Untracked files:
+    Untracked:  MRSS_delta_correlations.png
+    Untracked:  analysis/OLD/
+    Untracked:  analysis/SSc_ILD_Onset_Analysis_Clean.Rmd
+    Untracked:  analysis/SSc_ILD_Onset_Pathway_Enrichment.Rmd
+    Untracked:  analysis/SSc_Olink_Analysis_Clean-2.Rmd
+    Untracked:  analysis/SSc_Pathway_Enrichment-2.Rmd
+    Untracked:  analysis/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean.Rmd
+    Untracked:  analysis/Screenshot 2024-08-22 at 11.31.50.Rmd
+    Untracked:  analysis/output/
+    Untracked:  code/11102024_PreliminaryLook_Preprocessing.Rmd
+    Untracked:  code/14102024_MetaData.csv
+    Untracked:  code/Final_FinalList_ArthritisControls_2024.08.15.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_CB3groups.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_COSIMO.xlsx
+    Untracked:  data/Metadata_veSSC.xlsx
+    Untracked:  data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx
+    Untracked:  data/P2024-199-OLI_80_NPX_2024-10-10.parquet
+    Untracked:  data/PEA/
+    Untracked:  data/PRECISE_Pietro.xlsx
+    Untracked:  data/metadata.xlsx
+    Untracked:  output/ILD_Onset_Analysis/
+    Untracked:  output/Pietro_InterferonScore/
+    Untracked:  output/RESOLVE/
+    Untracked:  output/RESOLVE_clean/
+    Untracked:  output/SSc_Olink_Analysis_Clean-2/
+    Untracked:  output/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean/
+    Untracked:  output/UpdatedAnalysisPipelineCosimo/
+    Untracked:  output/arthritis_analysis/
+
+Unstaged changes:
+    Modified:   .Rprofile
+    Modified:   .gitattributes
+    Modified:   .gitignore
+    Modified:   README.md
+    Modified:   RESOLVE_SerumProteomics.Rproj
+    Modified:   _workflowr.yml
+    Modified:   analysis/_site.yml
+    Modified:   analysis/about.Rmd
+    Modified:   analysis/index.Rmd
+    Modified:   analysis/license.Rmd
+    Modified:   code/README.md
+    Modified:   data/README.md
+    Modified:   output/README.md
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Binary comparison of serum Olink proteomics between SSc patients
+<strong>with vs without joint synovitis</strong>, adjusting for
+immunosuppression status.</p>
+<p><strong>Analysis:</strong> - Binary limma: Joint_synovitis (Yes vs
+No) + Immunosuppression covariate - Filter for AveExpr &gt; 0,
+recalculate FDR - Volcano plot and boxplots for significant hits</p>
+<hr />
+</div>
+<div id="libraries" class="section level1">
+<h1>1. Libraries</h1>
+<pre class="r"><code># =============================================================================
+# REQUIRED PACKAGES
+# =============================================================================
+
+library(arrow)          # Read parquet files
+library(readxl)         # Read Excel metadata
+library(here)           # Project-relative paths
+library(dplyr)          # Data manipulation
+library(tidyr)          # Reshaping data
+library(tibble)         # rownames_to_column
+library(limma)          # Differential expression analysis
+library(ggplot2)        # Plotting
+library(ggpubr)         # stat_compare_means
+library(cowplot)        # Combine plots
+library(ggrepel)        # Label repelling for volcano</code></pre>
+<hr />
+</div>
+<div id="setup-output-directory" class="section level1">
+<h1>2. Setup Output Directory</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Create output directory for results
+# =============================================================================
+
+output_dir &lt;- &quot;output/arthritis_analysis&quot;
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+cat(&quot;Output directory:&quot;, output_dir, &quot;\n&quot;)</code></pre>
+<pre><code>Output directory: output/arthritis_analysis </code></pre>
+<hr />
+</div>
+<div id="color-palettes" class="section level1">
+<h1>3. Color Palettes</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Define consistent color schemes
+# =============================================================================
+
+colours_class &lt;- c(
+  &quot;No&quot; = &quot;#3498DB&quot;,    # Blue - No synovitis
+
+  &quot;Yes&quot; = &quot;#E74C3C&quot;    # Red - Has synovitis
+)</code></pre>
+<hr />
+</div>
+<div id="load-data" class="section level1">
+<h1>4. Load Data</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Load Olink NPX data and clinical metadata
+#
+# DATA SOURCES:
+# - Olink: NPX values (normalized protein expression)
+# - Metadata: Clinical variables including Joint_synovitis
+# =============================================================================
+
+# Load Olink data
+olink &lt;- read_parquet(&quot;/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/P2024-199-OLI_80_NPX_2024-10-10.parquet&quot;)
+
+# Load metadata (sheet 2 contains the arthritis cohort)
+metadata &lt;- read_excel(&quot;/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/Metadata_veSSC.xlsx&quot;, sheet = 2)
+
+cat(&quot;Olink samples:&quot;, length(unique(olink$SampleID)), &quot;\n&quot;)</code></pre>
+<pre><code>Olink samples: 95 </code></pre>
+<pre class="r"><code>cat(&quot;Metadata samples:&quot;, nrow(metadata), &quot;\n&quot;)</code></pre>
+<pre><code>Metadata samples: 18 </code></pre>
+<hr />
+</div>
+<div id="data-preparation" class="section level1">
+<h1>5. Data Preparation</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Prepare and merge data
+#
+# STEPS:
+# 1. Create matching patient IDs
+# 2. Filter for patients with Joint_synovitis data
+# 3. Merge Olink with metadata
+# =============================================================================
+
+# Create matching IDs (trim whitespace, lowercase)
+metadata$patient &lt;- trimws(tolower(metadata$Barcode))
+olink$patient &lt;- trimws(tolower(olink$SampleID))
+
+# Merge Olink with metadata
+merged &lt;- merge(olink, metadata, by = &quot;patient&quot;, all.x = TRUE)
+
+# Filter for patients with Joint_synovitis data (exclude controls)
+filtered_df &lt;- merged %&gt;%
+  filter(!is.na(Joint_synovitis))
+
+# Ensure Joint_synovitis is a factor
+filtered_df$Joint_synovitis &lt;- factor(filtered_df$Joint_synovitis, 
+                                       levels = c(0, 1), 
+                                       labels = c(&quot;No&quot;, &quot;Yes&quot;))
+
+cat(&quot;Patients with synovitis data:&quot;, length(unique(filtered_df$patient)), &quot;\n&quot;)</code></pre>
+<pre><code>Patients with synovitis data: 18 </code></pre>
+<pre class="r"><code>cat(&quot;\nJoint synovitis breakdown:\n&quot;)</code></pre>
+<pre><code>
+Joint synovitis breakdown:</code></pre>
+<pre class="r"><code>print(table(filtered_df$Joint_synovitis[!duplicated(filtered_df$patient)]))</code></pre>
+<pre><code>
+ No Yes 
+  9   9 </code></pre>
+<hr />
+</div>
+<div id="create-expression-matrix" class="section level1">
+<h1>6. Create Expression Matrix</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Create protein expression matrix for limma
+#
+# WHY: limma needs a matrix with:
+# - Rows = proteins (OlinkID)
+# - Columns = samples (patients)
+# - Values = NPX (expression)
+# =============================================================================
+
+# Create wide matrix
+matrix_data &lt;- filtered_df %&gt;%
+  dplyr::select(patient, OlinkID, NPX) %&gt;%
+  distinct() %&gt;%
+  pivot_wider(names_from = patient, values_from = NPX)
+
+# Convert to matrix
+data_matrix &lt;- as.data.frame(matrix_data)
+rownames(data_matrix) &lt;- data_matrix$OlinkID
+data_matrix &lt;- data_matrix[, -1]  # Remove OlinkID column
+data_matrix &lt;- as.matrix(data_matrix)
+
+# Convert to numeric
+data_matrix2 &lt;- apply(data_matrix, 2, as.numeric)
+rownames(data_matrix2) &lt;- rownames(data_matrix)
+
+# Remove control samples (keep only patient samples)
+keep_samples &lt;- !grepl(&quot;neg|sample|plate|control&quot;, colnames(data_matrix2), ignore.case = TRUE)
+data_matrix2 &lt;- data_matrix2[, keep_samples]
+
+cat(&quot;Expression matrix dimensions:&quot;, nrow(data_matrix2), &quot;proteins x&quot;, ncol(data_matrix2), &quot;samples\n&quot;)</code></pre>
+<pre><code>Expression matrix dimensions: 5440 proteins x 18 samples</code></pre>
+<hr />
+</div>
+<div id="prepare-metadata-for-limma" class="section level1">
+<h1>7. Prepare Metadata for limma</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Prepare filtered metadata matching matrix columns
+#
+# CRITICAL: Metadata rows must match matrix columns EXACTLY
+# =============================================================================
+
+# Get unique metadata per patient
+filtered_metadata &lt;- metadata %&gt;%
+  filter(tolower(trimws(Barcode)) %in% colnames(data_matrix2)) %&gt;%
+  mutate(patient = tolower(trimws(Barcode)))
+
+# Convert Immunosuppression to factor
+filtered_metadata$Imunosuppression &lt;- factor(filtered_metadata$Imunosuppression)
+
+# Convert Joint_synovitis to factor
+filtered_metadata$Joint_synovitis &lt;- factor(filtered_metadata$Joint_synovitis,
+                                             levels = c(0, 1),
+                                             labels = c(&quot;No&quot;, &quot;Yes&quot;))
+
+# =============================================================================
+# EXTRACT VISIT YEAR FROM DATE
+# =============================================================================
+
+# Extract year from Visit_Date
+filtered_metadata$Visit_Year &lt;- factor(format(filtered_metadata$Visit_Date, &quot;%Y&quot;))
+
+cat(&quot;Visit Year distribution:\n&quot;)</code></pre>
+<pre><code>Visit Year distribution:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Visit_Year))</code></pre>
+<pre><code>
+2014 2018 2019 2020 2021 2022 
+   3    3    3    3    3    3 </code></pre>
+<pre class="r"><code># Check for confounding with Joint_synovitis
+cat(&quot;\nVisit Year by Joint Synovitis:\n&quot;)</code></pre>
+<pre><code>
+Visit Year by Joint Synovitis:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Visit_Year, filtered_metadata$Joint_synovitis))</code></pre>
+<pre><code>      
+       No Yes
+  2014  2   1
+  2018  2   1
+  2019  1   2
+  2020  2   1
+  2021  1   2
+  2022  1   2</code></pre>
+<pre class="r"><code>cat(&quot;Metadata prepared for&quot;, nrow(filtered_metadata), &quot;samples\n&quot;)</code></pre>
+<pre><code>Metadata prepared for 18 samples</code></pre>
+<pre class="r"><code>cat(&quot;Joint synovitis:\n&quot;)</code></pre>
+<pre><code>Joint synovitis:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Joint_synovitis))</code></pre>
+<pre><code>
+ No Yes 
+  9   9 </code></pre>
+<pre class="r"><code>cat(&quot;\nImmunosuppression:\n&quot;)</code></pre>
+<pre><code>
+Immunosuppression:</code></pre>
+<pre class="r"><code>print(table(filtered_metadata$Imunosuppression))</code></pre>
+<pre><code>
+ 0  1 
+11  7 </code></pre>
+<hr />
+</div>
+<div id="sample-alignment-critical" class="section level1">
+<h1>8. Sample Alignment (CRITICAL)</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Ensure matrix columns and metadata rows are in the same order
+#
+# WHY THIS IS CRITICAL:
+# limma matches by POSITION, not by name!
+# If column 1 of matrix is patient A but row 1 of metadata is patient B,
+# limma will assign patient B&#39;s group to patient A&#39;s expression data.
+# =============================================================================
+
+cat(&quot;=== BEFORE alignment ===\n&quot;)</code></pre>
+<pre><code>=== BEFORE alignment ===</code></pre>
+<pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
+<pre><code>Matrix columns (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
+<pre class="r"><code>cat(&quot;Metadata patients (first 5):&quot;, head(filtered_metadata$patient, 5), &quot;\n&quot;)</code></pre>
+<pre><code>Metadata patients (first 5): 114004005004 116556343103 116798454201 113098682811 s681401 </code></pre>
+<pre class="r"><code>cat(&quot;Aligned:&quot;, all(colnames(data_matrix2) == filtered_metadata$patient), &quot;\n\n&quot;)</code></pre>
+<pre><code>Aligned: FALSE </code></pre>
+<pre class="r"><code># Reorder metadata to match matrix columns
+filtered_metadata &lt;- filtered_metadata[match(colnames(data_matrix2), filtered_metadata$patient), ]
+
+cat(&quot;=== AFTER alignment ===\n&quot;)</code></pre>
+<pre><code>=== AFTER alignment ===</code></pre>
+<pre class="r"><code>cat(&quot;Matrix columns (first 5):&quot;, head(colnames(data_matrix2), 5), &quot;\n&quot;)</code></pre>
+<pre><code>Matrix columns (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
+<pre class="r"><code>cat(&quot;Metadata patients (first 5):&quot;, head(filtered_metadata$patient, 5), &quot;\n&quot;)</code></pre>
+<pre><code>Metadata patients (first 5): 111595454509 111625731103 112461052618 112906218317 113098682811 </code></pre>
+<pre class="r"><code>cat(&quot;Aligned:&quot;, all(colnames(data_matrix2) == filtered_metadata$patient), &quot;\n&quot;)</code></pre>
+<pre><code>Aligned: TRUE </code></pre>
+<pre class="r"><code># STOP if not aligned
+stopifnot(&quot;Sample alignment failed!&quot; = all(colnames(data_matrix2) == filtered_metadata$patient))
+cat(&quot;\n✓ Alignment verified\n&quot;)</code></pre>
+<pre><code>
+✓ Alignment verified</code></pre>
+<hr />
+</div>
+<div id="binary-analysis-joint-synovitis-vs-no-synovitis"
+class="section level1">
+<h1>9. Binary Analysis: Joint Synovitis vs No Synovitis</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Test for differential protein abundance
+#
+# MODEL: ~0 + Joint_synovitis + Imunosuppression
+# - ~0 + Joint_synovitis: estimate mean for each group (not intercept)
+# - + Imunosuppression: adjust for immunosuppression status
+#
+# CONTRAST: Synovitis_Yes - Synovitis_No
+# - Positive logFC = higher in patients WITH synovitis
+# - Negative logFC = lower in patients WITH synovitis
+# =============================================================================
+
+# Create design matrix
+design &lt;- model.matrix(~0 + Joint_synovitis + Visit_Year, data = filtered_metadata)
+colnames(design) &lt;- gsub(&quot;Joint_synovitis&quot;, &quot;&quot;, colnames(design))
+
+cat(&quot;Design matrix:\n&quot;)</code></pre>
+<pre><code>Design matrix:</code></pre>
+<pre class="r"><code>print(head(design))</code></pre>
+<pre><code>  No Yes Visit_Year2018 Visit_Year2019 Visit_Year2020 Visit_Year2021
+1  1   0              1              0              0              0
+2  0   1              1              0              0              0
+3  1   0              1              0              0              0
+4  1   0              0              1              0              0
+5  0   1              0              1              0              0
+6  0   1              0              1              0              0
+  Visit_Year2022
+1              0
+2              0
+3              0
+4              0
+5              0
+6              0</code></pre>
+<pre class="r"><code># Fit model
+fit &lt;- lmFit(data_matrix2, design)
+
+# Create contrast: Yes - No (positive = higher in synovitis)
+contrast.matrix &lt;- makeContrasts(
+  Synovitis_Yes_vs_No = Yes - No,
+  levels = design
+)
+
+# Apply contrast and empirical Bayes
+fit2 &lt;- contrasts.fit(fit, contrast.matrix)
+fit2 &lt;- eBayes(fit2)
+
+# Extract results
+results &lt;- topTable(fit2, coef = 1, number = Inf, adjust.method = &quot;BH&quot;)
+results &lt;- results %&gt;% rownames_to_column(var = &quot;OlinkID&quot;)
+
+cat(&quot;\nTop 10 proteins by p-value:\n&quot;)</code></pre>
+<pre><code>
+Top 10 proteins by p-value:</code></pre>
+<pre class="r"><code>print(head(results, 10))</code></pre>
+<pre><code>    OlinkID    logFC     AveExpr        t      P.Value adj.P.Val           B
+1  OID40443 3.948155  3.08819263 5.542876 8.992302e-05 0.2236515  1.07812991
+2  OID42219 2.134699  1.31466179 5.479885 1.001808e-04 0.2236515  1.00149875
+3  OID45127 1.035509  0.22972472 5.235503 1.531233e-04 0.2236515  0.69720631
+4  OID45320 1.475331  0.41505528 5.056936 2.098493e-04 0.2236515  0.46786753
+5  OID42102 1.536748 -0.28393297 5.015502 2.259074e-04 0.2236515  0.41381532
+6  OID41609 3.058887 -2.07751932 4.902403 2.765926e-04 0.2236515  0.26468400
+7  OID40398 2.524298  0.54505687 4.880345 2.877869e-04 0.2236515  0.23532810
+8  OID40232 3.726493 -0.09290828 4.737933 3.723600e-04 0.2467997  0.04371448
+9  OID44893 1.406727 -0.51567629 4.687331 4.083083e-04 0.2467997 -0.02523211
+10 OID41943 1.837012  1.41050109 4.607733 4.723088e-04 0.2569360 -0.13458568</code></pre>
+<hr />
+</div>
+<div id="expression-filtering-fdr-recalculation" class="section level1">
+<h1>10. Expression Filtering &amp; FDR Recalculation</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Filter for reliably detected proteins and recalculate FDR
+#
+# WHY FILTER ON AveExpr:
+# - Low-expressed proteins are noisy and unreliable
+# - AveExpr &gt; 0 keeps proteins with detectable signal
+#
+# WHY RECALCULATE FDR:
+# - Original adj.P.Val was calculated on ALL proteins
+# - After filtering, fewer tests → less harsh correction
+# - This is valid because AveExpr is INDEPENDENT of the test statistic
+# =============================================================================
+
+# Filter and recalculate FDR
+results_filtered &lt;- results %&gt;%
+  filter(AveExpr &gt; 0) %&gt;%
+  mutate(adj.P.Val = p.adjust(P.Value, method = &quot;BH&quot;)) %&gt;%
+  arrange(P.Value)
+
+cat(&quot;Before filtering:&quot;, nrow(results), &quot;proteins\n&quot;)</code></pre>
+<pre><code>Before filtering: 5440 proteins</code></pre>
+<pre class="r"><code>cat(&quot;After AveExpr &gt; 0:&quot;, nrow(results_filtered), &quot;proteins\n&quot;)</code></pre>
+<pre><code>After AveExpr &gt; 0: 3785 proteins</code></pre>
+<pre class="r"><code>cat(&quot;FDR &lt; 0.3:&quot;, sum(results_filtered$adj.P.Val &lt; 0.2), &quot;proteins\n&quot;)</code></pre>
+<pre><code>FDR &lt; 0.3: 4 proteins</code></pre>
+<hr />
+</div>
+<div id="add-gene-names" class="section level1">
+<h1>11. Add Gene Names</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Add human-readable gene names to results
+# =============================================================================
+
+# Get unique OlinkID to Assay mapping
+gene_map &lt;- filtered_df %&gt;%
+  dplyr::select(OlinkID, Assay) %&gt;%
+  distinct()
+
+# Merge with results
+results_filtered &lt;- results_filtered %&gt;%
+  left_join(gene_map, by = &quot;OlinkID&quot;)
+
+cat(&quot;Results with gene names:\n&quot;)</code></pre>
+<pre><code>Results with gene names:</code></pre>
+<pre class="r"><code>print(head(results_filtered[, c(&quot;OlinkID&quot;, &quot;Assay&quot;, &quot;logFC&quot;, &quot;P.Value&quot;, &quot;adj.P.Val&quot;)], 15))</code></pre>
+<pre><code>    OlinkID    Assay     logFC      P.Value adj.P.Val
+1  OID40443    NANOG 3.9481549 8.992302e-05 0.1895922
+2  OID42219  CAMSAP2 2.1346988 1.001808e-04 0.1895922
+3  OID45127   FGFBP2 1.0355093 1.531233e-04 0.1931906
+4  OID45320       C2 1.4753311 2.098493e-04 0.1985699
+5  OID40398    MAST1 2.5242981 2.877869e-04 0.2178547
+6  OID41943  TP53BP2 1.8370118 4.723088e-04 0.2979481
+7  OID40445     NBEA 2.6346826 7.815250e-04 0.3929965
+8  OID40118     CIPC 4.2272777 8.306398e-04 0.3929965
+9  OID43051   SBSPON 0.8383384 1.067807e-03 0.4437049
+10 OID44538    CHMP6 0.7734292 1.373122e-03 0.4437049
+11 OID44840    PDGFD 1.4301941 1.482202e-03 0.4437049
+12 OID42249 CDC42BPG 2.0834779 1.488722e-03 0.4437049
+13 OID40698     UCK1 1.1448915 1.753999e-03 0.4437049
+14 OID42434   EXOSC3 1.8754736 1.768665e-03 0.4437049
+15 OID44993   TOMM20 1.6092548 1.830928e-03 0.4437049</code></pre>
+<hr />
+</div>
+<div id="direction-of-change-summary" class="section level1">
+<h1>12. Direction of Change Summary</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Summarize which proteins are up vs down in synovitis
+#
+# INTERPRETATION:
+# - Positive logFC = higher in patients WITH joint synovitis
+# - Negative logFC = lower in patients WITH joint synovitis
+# =============================================================================
+
+# Define hits
+hits &lt;- results_filtered %&gt;% filter(adj.P.Val &lt; 0.3)
+
+hits_up &lt;- hits %&gt;% filter(logFC &gt; 0)
+hits_down &lt;- hits %&gt;% filter(logFC &lt; 0)
+
+cat(&quot;=== Direction of Change (FDR &lt; 0.2) ===\n\n&quot;)</code></pre>
+<pre><code>=== Direction of Change (FDR &lt; 0.2) ===</code></pre>
+<pre class="r"><code>cat(&quot;Higher in Synovitis (positive logFC):&quot;, nrow(hits_up), &quot;\n&quot;)</code></pre>
+<pre><code>Higher in Synovitis (positive logFC): 6 </code></pre>
+<pre class="r"><code>if(nrow(hits_up) &gt; 0) cat(&quot;  &quot;, paste(hits_up$Assay, collapse = &quot;, &quot;), &quot;\n\n&quot;)</code></pre>
+<pre><code>   NANOG, CAMSAP2, FGFBP2, C2, MAST1, TP53BP2 </code></pre>
+<pre class="r"><code>cat(&quot;Lower in Synovitis (negative logFC):&quot;, nrow(hits_down), &quot;\n&quot;)</code></pre>
+<pre><code>Lower in Synovitis (negative logFC): 0 </code></pre>
+<pre class="r"><code>if(nrow(hits_down) &gt; 0) cat(&quot;  &quot;, paste(hits_down$Assay, collapse = &quot;, &quot;), &quot;\n&quot;)</code></pre>
+<hr />
+</div>
+<div id="volcano-plot" class="section level1">
+<h1>13. Volcano Plot</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Visualize differential expression across all proteins
+#
+# X-axis: log2 fold change (effect size)
+# Y-axis: -log10 p-value (significance)
+# =============================================================================
+
+# Add significance categories
+results_filtered &lt;- results_filtered %&gt;%
+  mutate(
+    sig_category = case_when(
+      adj.P.Val &lt; 0.3 &amp; logFC &gt; 0.5 ~ &quot;Up in Synovitis&quot;,
+      adj.P.Val &lt; 0.2 &amp; logFC &lt; -0.5 ~ &quot;Down in Synovitis&quot;,
+      TRUE ~ &quot;NS&quot;
+    )
+  )
+
+# Select top hits to label
+top_hits &lt;- results_filtered %&gt;%
+  filter(adj.P.Val &lt; 0.2) %&gt;%
+  arrange(P.Value) %&gt;%
+  head(15)
+
+# Colors
+colors &lt;- c(&quot;Up in Synovitis&quot; = &quot;#E74C3C&quot;,
+            &quot;Down in Synovitis&quot; = &quot;#3498DB&quot;, 
+            &quot;NS&quot; = &quot;#CCCCCC&quot;)
+
+# Create volcano plot
+volcano &lt;- ggplot(results_filtered, aes(x = logFC, y = -log10(P.Value))) +
+  geom_point(aes(color = sig_category), size = 1.5, alpha = 0.6) +
+  geom_text_repel(
+    data = top_hits,
+    aes(label = Assay),
+    size = 3,
+    max.overlaps = 20,
+    segment.color = &quot;gray50&quot;,
+    segment.size = 0.3
+  ) +
+  geom_vline(xintercept = c(-0.5, 0.5), linetype = &quot;dashed&quot;, color = &quot;gray40&quot;) +
+  geom_hline(yintercept = -log10(0.05), linetype = &quot;dashed&quot;, color = &quot;gray40&quot;) +
+  scale_color_manual(values = colors, name = &quot;&quot;) +
+  labs(
+    title = &quot;Joint Synovitis vs No Synovitis&quot;,
+    subtitle = &quot;Positive logFC = higher in synovitis patients&quot;,
+    x = expression(Log[2]~Fold~Change),
+    y = expression(-Log[10]~P-value)
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    plot.title = element_text(face = &quot;bold&quot;, hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = &quot;gray40&quot;),
+    legend.position = &quot;top&quot;
+  )
+
+# Save
+ggsave(file.path(output_dir, &quot;volcano_synovitis.pdf&quot;), volcano, width = 8, height = 7)
+
+print(volcano)</code></pre>
+<p><img src="figure/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean.Rmd/volcano-1.png" alt="" width="2400" style="display: block; margin: auto;" /></p>
+<hr />
+</div>
+<div id="boxplots-for-significant-proteins" class="section level1">
+<h1>14. Boxplots for Significant Proteins</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Visualize expression of top proteins
+# =============================================================================
+
+# Create plot data (wide format with metadata)
+olink_wide &lt;- filtered_df %&gt;%
+  dplyr::select(patient, Assay, NPX) %&gt;%
+  distinct() %&gt;%
+  pivot_wider(names_from = Assay, values_from = NPX)
+
+# Merge with metadata
+plot_data_all &lt;- olink_wide %&gt;%
+  inner_join(filtered_metadata %&gt;% dplyr::select(patient, Joint_synovitis), by = &quot;patient&quot;)
+
+# Select top 20 by p-value
+top20 &lt;- results_filtered %&gt;%
+  arrange(P.Value) %&gt;%
+  head(20)
+
+# Plot function
+plot_protein_violin &lt;- function(data, protein_name, fdr_value) {
+  
+  ggplot(data, aes(x = Joint_synovitis, y = .data[[protein_name]], fill = Joint_synovitis)) +
+    geom_violin(alpha = 0.5, color = NA, trim = FALSE) +
+    geom_boxplot(width = 0.2, alpha = 0.9, outlier.shape = NA) +
+    geom_jitter(width = 0.1, size = 1.5, alpha = 0.7, color = &quot;black&quot;) +
+    scale_fill_manual(values = colours_class) +
+    stat_compare_means(method = &quot;wilcox.test&quot;, label = &quot;p.format&quot;, 
+                       label.x.npc = 0.5, label.y.npc = 0.95, size = 3) +
+    labs(
+      title = protein_name,
+      subtitle = paste0(&quot;FDR = &quot;, round(fdr_value, 3)),
+      x = NULL,
+      y = &quot;NPX&quot;
+    ) +
+    theme_classic(base_size = 11) +
+    theme(
+      plot.title = element_text(face = &quot;bold&quot;, hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5, color = &quot;gray40&quot;),
+      legend.position = &quot;none&quot;
+    )
+}
+
+# Generate plots
+plot_list &lt;- list()
+
+for (i in 1:nrow(top20)) {
+  protein &lt;- top20$Assay[i]
+  fdr &lt;- top20$adj.P.Val[i]
+  
+  if (protein %in% colnames(plot_data_all)) {
+    plot_list[[protein]] &lt;- plot_protein_violin(plot_data_all, protein, fdr)
+  }
+}
+
+# Combine plots
+combined_plot &lt;- plot_grid(plotlist = plot_list, ncol = 4, align = &quot;hv&quot;)
+
+# Save
+ggsave(file.path(output_dir, &quot;boxplots_synovitis_top20.pdf&quot;), 
+       combined_plot, width = 12, height = 15)
+
+print(combined_plot)</code></pre>
+<p><img src="figure/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean.Rmd/boxplots-1.png" alt="" width="3600" style="display: block; margin: auto;" /></p>
+<hr />
+</div>
+<div id="export-results" class="section level1">
+<h1>15. Export Results</h1>
+<pre class="r"><code># =============================================================================
+# PURPOSE: Save results for downstream analysis
+# =============================================================================
+
+# All results (filtered)
+write.csv(results_filtered, 
+          file.path(output_dir, &quot;results_Synovitis_vs_NoSynovitis_all.csv&quot;), 
+          row.names = FALSE)
+
+# Significant hits only
+write.csv(hits, 
+          file.path(output_dir, &quot;results_Synovitis_vs_NoSynovitis_FDR02.csv&quot;), 
+          row.names = FALSE)
+
+cat(&quot;Results exported to:&quot;, output_dir, &quot;\n&quot;)</code></pre>
+<pre><code>Results exported to: output/arthritis_analysis </code></pre>
+<pre class="r"><code>cat(&quot;Files:\n&quot;)</code></pre>
+<pre><code>Files:</code></pre>
+<pre class="r"><code>cat(&quot;  - results_Synovitis_vs_NoSynovitis_all.csv\n&quot;)</code></pre>
+<pre><code>  - results_Synovitis_vs_NoSynovitis_all.csv</code></pre>
+<pre class="r"><code>cat(&quot;  - results_Synovitis_vs_NoSynovitis_FDR02.csv\n&quot;)</code></pre>
+<pre><code>  - results_Synovitis_vs_NoSynovitis_FDR02.csv</code></pre>
+<pre class="r"><code>cat(&quot;  - volcano_synovitis.pdf\n&quot;)</code></pre>
+<pre><code>  - volcano_synovitis.pdf</code></pre>
+<pre class="r"><code>cat(&quot;  - boxplots_synovitis_top20.pdf\n&quot;)</code></pre>
+<pre><code>  - boxplots_synovitis_top20.pdf</code></pre>
+<hr />
+</div>
+<div id="session-info" class="section level1">
+<h1>Session Info</h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] ggrepel_0.9.8 cowplot_1.2.0 ggpubr_0.6.3  ggplot2_4.0.3 limma_3.68.4 
+ [6] tibble_3.3.1  tidyr_1.3.2   dplyr_1.2.1   here_1.0.2    readxl_1.5.0 
+[11] arrow_24.0.0 
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       xfun_0.59          bslib_0.11.0       rstatix_0.7.3     
+ [5] vctrs_0.7.3        tools_4.6.1        generics_0.1.4     pkgconfig_2.0.3   
+ [9] RColorBrewer_1.1-3 S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5   
+[13] compiler_4.6.1     farver_2.1.2       stringr_1.6.0      git2r_0.36.2      
+[17] statmod_1.5.2      carData_3.0-6      httpuv_1.6.17      htmltools_0.5.9   
+[21] sass_0.4.10        yaml_2.3.12        Formula_1.2-5      later_1.4.8       
+[25] pillar_1.11.1      car_3.1-5          jquerylib_0.1.4    cachem_1.1.0      
+[29] abind_1.4-8        tidyselect_1.2.1   digest_0.6.39      stringi_1.8.7     
+[33] purrr_1.2.2        labeling_0.4.3     rprojroot_2.1.1    fastmap_1.2.0     
+[37] grid_4.6.1         cli_3.6.6          magrittr_2.0.5     broom_1.0.13      
+[41] withr_3.0.3        scales_1.4.0       promises_1.5.0     backports_1.5.1   
+[45] bit64_4.8.2        rmarkdown_2.31     bit_4.6.0          otel_0.2.0        
+[49] ggsignif_0.6.4     workflowr_1.7.2    cellranger_1.1.0   evaluate_1.0.5    
+[53] knitr_1.51         rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1        
+[57] rstudioapi_0.19.0  jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] ggrepel_0.9.8 cowplot_1.2.0 ggpubr_0.6.3  ggplot2_4.0.3 limma_3.68.4 
+ [6] tibble_3.3.1  tidyr_1.3.2   dplyr_1.2.1   here_1.0.2    readxl_1.5.0 
+[11] arrow_24.0.0 
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       xfun_0.59          bslib_0.11.0       rstatix_0.7.3     
+ [5] vctrs_0.7.3        tools_4.6.1        generics_0.1.4     pkgconfig_2.0.3   
+ [9] RColorBrewer_1.1-3 S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5   
+[13] compiler_4.6.1     farver_2.1.2       stringr_1.6.0      git2r_0.36.2      
+[17] statmod_1.5.2      carData_3.0-6      httpuv_1.6.17      htmltools_0.5.9   
+[21] sass_0.4.10        yaml_2.3.12        Formula_1.2-5      later_1.4.8       
+[25] pillar_1.11.1      car_3.1-5          jquerylib_0.1.4    cachem_1.1.0      
+[29] abind_1.4-8        tidyselect_1.2.1   digest_0.6.39      stringi_1.8.7     
+[33] purrr_1.2.2        labeling_0.4.3     rprojroot_2.1.1    fastmap_1.2.0     
+[37] grid_4.6.1         cli_3.6.6          magrittr_2.0.5     broom_1.0.13      
+[41] withr_3.0.3        scales_1.4.0       promises_1.5.0     backports_1.5.1   
+[45] bit64_4.8.2        rmarkdown_2.31     bit_4.6.0          otel_0.2.0        
+[49] ggsignif_0.6.4     workflowr_1.7.2    cellranger_1.1.0   evaluate_1.0.5    
+[53] knitr_1.51         rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1        
+[57] rstudioapi_0.19.0  jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
