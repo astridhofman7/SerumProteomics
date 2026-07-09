@@ -1,5 +1,5 @@
 ---
-title: "PreSScArthritis_vs_SScArthritis"
+title: "PreSSc Arthritis versus SSc Arthritis"
 author: "Analysis Script"
 date: "`r Sys.Date()`"
 output: 

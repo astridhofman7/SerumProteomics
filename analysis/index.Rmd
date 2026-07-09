@@ -14,3 +14,7 @@ editor_options:
 
 1. [PreSSc Synovitis vs. No Synovitis](PreSSc_Synovitis.html)
 2. [PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
+
+### RESOLVE
+
+1. [Analysis Types: Binary vs. Continuous](SSc_Skin_Regression_Analysis.html)

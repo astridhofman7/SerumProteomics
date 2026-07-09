@@ -1,0 +1,1060 @@
+---
+title: "Analysis Types: Binary vs. Continuous"
+author: "Analysis Script"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, dpi = 300)
+
+# =============================================================================
+# OUTPUT DIRECTORY: output/<script_name>/
+# =============================================================================
+
+script_name <- "SSc_Skin_Regression_Analysis"
+
+output_dir <- here::here("output", script_name)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+cat("Output directory:", output_dir, "\n")
+
+# Color palettes
+colours_eight <- c("#a4161a", "#F3722C", "#F9C74F", "#90BE6D", "#43AA8B", "#4D908E", "#3d348b", "#277DA1")
+colors_class <- c("Regressor" = "#48639C", "Non_Regressor" = "#AF3B6E", "Stable" = "#ECA72C", "Healthy" = "#84A07C")
+
+```
+
+## Overview
+
+This analysis identifies serum proteins associated with skin fibrosis regression in SSc patients.
+
+**Four analytical approaches:**
+
+| Analysis | Comparison | Description |
+|----------|------------|-------------|
+| A | Binary: Regressor vs Non_Regressor | Includes Stable patients with Non_Regressors |
+| B | Continuous: All patients | Correlation with ΔMRSS (degree of skin change) |
+| C | Binary: Regressor vs Progressor | Excludes Stable — compares extremes only |
+| D | Continuous: Regressor vs Progressor | Correlation with ΔMRSS, excludes Stable |
+
+**Sensitivity analysis** restricts to years with both groups represented (2014, 2019-2021).
+
+**Healthy controls** are included for visualization/reference but not in statistical models.
+
+```{r libraries}
+# Data I/O
+library(arrow)        # Read parquet files (Olink output format)
+library(openxlsx)     # Read Excel metadata
+
+# Data manipulation
+library(dplyr)        # Data wrangling
+library(tidyr)        # Reshaping data (long <-> wide)
+
+# Statistical analysis
+library(limma)        # Linear models for differential expression
+                      # Designed for microarray/proteomics; handles small samples well
+                      # Uses empirical Bayes to borrow information across proteins
+
+# Visualization
+library(ggplot2)      # Plotting
+library(ggpubr)       # Add statistical comparisons to plots
+library(cowplot)      # Combine multiple plots
+library(ggrepel)      # Non-overlapping labels on volcano plots
+```
+
+---
+
+# 1. Data Loading
+
+```{r load-data}
+# =============================================================================
+# PURPOSE: Load raw data files
+#
+# Two data sources:
+# 1. NPX data: Olink's Normalized Protein eXpression values (log2 scale)
+#    - Already normalized across plates by Olink
+#    - Long format: one row per protein-sample combination
+#
+# 2. Metadata: Clinical data including mRSS scores and patient classification
+# =============================================================================
+
+# UPDATE THESE PATHS to your local files
+npx_data <- read_parquet(here::here("data", "P2024-199-OLI_80_NPX_2024-10-10.parquet"))
+metadata <- read.xlsx(here::here("data", "metadata.xlsx"))
+
+cat("NPX data:", nrow(npx_data), "rows\n")
+cat("Metadata:", nrow(metadata), "samples\n")
+```
+
+---
+
+# 2. Data Preparation
+
+```{r prepare-data}
+# =============================================================================
+# PURPOSE: Merge proteomics data with clinical metadata
+#
+# WHY: NPX data contains only sample IDs and protein values.
+#      We need to link these to clinical outcomes (mRSS change, classification)
+#      to test which proteins associate with skin regression.
+# =============================================================================
+
+# Create matching ID columns for merge
+# (NPX uses "SampleID", metadata uses "Barcode" — same values, different names)
+metadata$patient <- metadata$Barcode
+npx_data$patient <- npx_data$SampleID
+
+# Create binary grouping variable: Regressor vs Non_Regressor
+# WHY: Stable patients didn't improve but also didn't worsen.
+#      For the primary analysis, we group them with Progressors as "Non_Regressor"
+#      to answer: "What distinguishes patients who improved from those who didn't?"
+metadata$PatientGroup <- ifelse(
+  metadata$Classification %in% c("Progressor", "Stable"),
+  "Non_Regressor",
+  metadata$Classification
+)
+
+# Merge NPX with metadata (left join: keep all NPX rows)
+merged <- merge(npx_data, metadata, by = "patient", all.x = TRUE)
+merged <- tibble::as_tibble(merged)
+
+# Keep only samples with clinical outcome data OR plate controls
+# WHY: Plate controls (CTRL samples) are needed for QC but have no clinical data
+#      Samples without MRSS_Delta cannot be used in the analysis
+filtered_df <- merged %>%
+  filter(!is.na(MRSS_Delta) | grepl("CTRL", SampleID))
+
+cat("Merged data:", nrow(merged), "rows\n")
+cat("Filtered data:", nrow(filtered_df), "rows\n")
+```
+
+```{r prepare-metadata}
+# =============================================================================
+# PURPOSE: Prepare clinical metadata for statistical modeling
+#
+# KEY STEPS:
+# 1. Exclude patients missing from the expression matrix
+# 2. Calculate the continuous outcome variable (signed MRSS change)
+# 3. Convert categorical variables to factors with proper reference levels
+# =============================================================================
+
+# Exclude patients 180 and 216
+# WHY: These patients are in metadata but missing from NPX data (no proteomics)
+filtered_metadata <- metadata %>%
+  filter(!EUSTAR_Number %in% c(180, 216)) %>%
+  filter(!is.na(MRSS_Delta))  # Must have clinical outcome
+
+# Calculate SIGNED mRSS change: Baseline minus Follow-up
+# WHY: MRSS_Delta in metadata is absolute value (unsigned)
+#      We need direction: positive = improvement, negative = worsening
+#      This enables the continuous correlation analysis
+filtered_metadata$mRSS_FUP <- as.numeric(filtered_metadata$mRSS_FUP)
+filtered_metadata$MRSS_signed <- filtered_metadata$mRSS_BL - filtered_metadata$mRSS_FUP
+
+# Convert Visit_Year to factor
+# WHY: Year of sample collection may introduce batch effects
+#      (different reagent lots, operators, storage times)
+#      We'll include it as a covariate to adjust for these effects
+filtered_metadata$Visit_Year <- as.factor(filtered_metadata$Visit_Year)
+
+# Set reference level for PatientGroup
+# WHY: In limma, the first factor level is the reference (denominator in contrast)
+#      Setting "Non_Regressor" first means positive logFC = higher in Regressor
+filtered_metadata$PatientGroup <- factor(filtered_metadata$PatientGroup,
+                                          levels = c("Non_Regressor", "Regressor"))
+
+# Extract patient NPX data only (exclude plate controls)
+# WHY: Controls are useful for QC but shouldn't be in statistical models
+patient_npx <- filtered_df %>%
+  filter(!grepl("CTRL", SampleID)) %>%
+  filter(EUSTAR_Number %in% filtered_metadata$EUSTAR_Number)
+
+cat("Patients:", nrow(filtered_metadata), "\n")
+cat("Group distribution:\n")
+print(table(filtered_metadata$PatientGroup))
+print(table(filtered_metadata$Classification))
+```
+
+---
+
+# 3. Expression Matrix Creation
+
+```{r create-matrix}
+# =============================================================================
+# PURPOSE: Reshape NPX data from long to wide format for limma
+#
+# WHY: Olink outputs data in "long" format (one row per protein-sample)
+#      limma requires a matrix: rows = proteins, columns = samples
+#      This is the standard format for differential expression analysis
+# =============================================================================
+
+# Extract the three columns we need
+matrix_df <- as.data.frame(cbind(patient_npx$EUSTAR_Number, patient_npx$NPX, patient_npx$OlinkID))
+colnames(matrix_df) <- c("EUSTAR_Number", "Value", "Protein")
+
+# Reshape: long → wide (proteins as rows, patients as columns)
+wide_data <- tidyr::pivot_wider(matrix_df, names_from = EUSTAR_Number, values_from = Value)
+wide_data <- as.data.frame(wide_data)
+
+# Set protein IDs as rownames (limma convention)
+rownames(wide_data) <- wide_data$Protein
+data <- wide_data[, !(colnames(wide_data) %in% c("NA", "Protein")), drop = FALSE]
+
+# Convert to numeric matrix
+# WHY: pivot_wider creates character columns; limma needs numeric
+data_matrix <- as.matrix(data)
+data_matrix2 <- apply(data_matrix, 2, as.numeric)
+rownames(data_matrix2) <- rownames(data_matrix)
+
+# Create gene lookup table (OlinkID → gene symbol)
+# WHY: Results are easier to interpret with gene names than Olink IDs
+gene_lookup <- patient_npx %>% distinct(OlinkID, Assay)
+
+cat("Expression matrix:", nrow(data_matrix2), "proteins x", ncol(data_matrix2), "patients\n")
+```
+
+---
+
+# 4. CRITICAL: Verify Sample Alignment
+
+```{r verify-alignment}
+# =============================================================================
+# PURPOSE: Ensure metadata rows match expression matrix columns
+#
+# WHY THIS IS CRITICAL:
+# limma assumes row i of the design matrix describes column i of the data matrix.
+# If they're misaligned, you're testing the wrong samples against each other!
+#
+# This is the #1 source of errors in differential expression analysis.
+# Always verify alignment before running any statistical model.
+# =============================================================================
+
+# Show the mismatch (expected — data come from different sources)
+cat("BEFORE alignment:\n")
+cat("Matrix columns (first 5):", head(colnames(data_matrix2), 5), "\n")
+cat("Metadata EUSTAR (first 5):", head(as.character(filtered_metadata$EUSTAR_Number), 5), "\n")
+cat("Aligned:", all(colnames(data_matrix2) == as.character(filtered_metadata$EUSTAR_Number)), "\n\n")
+
+# FIX: Reorder metadata rows to match matrix column order
+# match() returns the position in metadata that corresponds to each matrix column
+filtered_metadata <- filtered_metadata[match(colnames(data_matrix2),
+                                              as.character(filtered_metadata$EUSTAR_Number)), ]
+
+# Verify alignment with stopifnot() — script will halt if alignment fails
+stopifnot(all(colnames(data_matrix2) == as.character(filtered_metadata$EUSTAR_Number)))
+cat("✓ Alignment verified\n")
+```
+
+---
+
+# 5. Analysis A: Binary Group Comparison (Limma)
+
+**Question:** Which proteins differ between Regressors and Non_Regressors?
+
+```{r limma-binary}
+# =============================================================================
+# PURPOSE: Test for differential protein abundance between groups
+#
+# WHY LIMMA:
+# - Designed for high-dimensional data with small sample sizes
+# - Uses empirical Bayes to "borrow strength" across proteins
+# - More stable variance estimates than t-tests when n is small
+# - Handles covariates (Visit_Year) naturally
+#
+# MODEL: ~0 + PatientGroup + Visit_Year
+# - "~0 + PatientGroup" estimates a mean for each group (no intercept)
+# - "+ Visit_Year" adjusts for batch effects from sample collection year
+# =============================================================================
+
+# Build design matrix
+# WHY ~0 (no intercept): Allows direct group mean estimation
+# This makes contrast specification clearer: GroupA - GroupB
+design_binary <- model.matrix(~0 + PatientGroup + Visit_Year, data = filtered_metadata)
+
+# Fit linear model to each protein
+# For each protein: Expression ~ β1*Regressor + β2*NonRegressor + β3*Year2019 + ...
+fit_binary <- lmFit(data_matrix2, design_binary)
+
+# Define contrast: Regressor minus Non_Regressor
+# Positive logFC = higher in Regressor, Negative = higher in Non_Regressor
+contrast.matrix <- makeContrasts(
+  Regressor_vs_NonRegressor = PatientGroupRegressor - PatientGroupNon_Regressor,
+  levels = design_binary
+)
+
+# Apply contrast and compute moderated statistics
+fit_binary2 <- contrasts.fit(fit_binary, contrast.matrix)
+
+# Empirical Bayes moderation
+# WHY: Shrinks protein-specific variances toward a common value
+# This stabilizes p-values when sample sizes are small
+fit_binary2 <- eBayes(fit_binary2)
+
+# Extract results for all proteins
+# number = Inf: return all proteins, not just top hits
+# adjust.method = "BH": Benjamini-Hochberg FDR correction
+binary_results <- topTable(fit_binary2, coef = 1, number = Inf, adjust.method = "BH")
+
+# Add gene symbols for interpretability
+binary_results$OlinkID <- rownames(binary_results)
+binary_results <- binary_results %>% left_join(gene_lookup, by = "OlinkID")
+
+# Summary statistics
+cat("=== BINARY COMPARISON: Regressor vs Non_Regressor ===\n")
+cat("FDR < 0.05:", sum(binary_results$adj.P.Val < 0.05), "\n")
+cat("FDR < 0.1:", sum(binary_results$adj.P.Val < 0.1), "\n")
+cat("FDR < 0.2:", sum(binary_results$adj.P.Val < 0.2), "\n")
+cat("Nominal p < 0.05:", sum(binary_results$P.Value < 0.05), "\n")
+```
+
+```{r binary-top-hits}
+# Display top hits
+# logFC: log2 fold change (Regressor vs Non_Regressor)
+# AveExpr: average expression across all samples (higher = more abundant)
+# P.Value: nominal p-value from moderated t-test
+# adj.P.Val: FDR-adjusted p-value (Benjamini-Hochberg)
+binary_results %>%
+  select(Assay, logFC, AveExpr, P.Value, adj.P.Val) %>%
+  head(30)
+```
+
+---
+
+# 6. Analysis B: Continuous Correlation with ΔMRSS (Limma)
+
+**Question:** Which proteins predict degree of skin improvement?
+
+```{r limma-continuous}
+# =============================================================================
+# PURPOSE: Test correlation between protein levels and degree of skin change
+#
+# WHY CONTINUOUS INSTEAD OF BINARY:
+# - Binary (Regressor vs Non_Regressor) treats all improvers equally
+# - Continuous analysis uses the actual ΔMRSS value
+# - A patient who improved by 15 points contributes more signal than one who improved by 5
+# - This can be MORE POWERFUL when the true relationship is dose-dependent
+#
+# MODEL: ~MRSS_signed + Visit_Year
+# - MRSS_signed: continuous predictor (BL - FUP; positive = improvement)
+# - Visit_Year: adjustment for batch effects
+#
+# INTERPRETATION OF logFC:
+# - logFC = change in NPX per 1-unit increase in MRSS_signed
+# - Positive logFC: higher protein → more improvement
+# - Negative logFC: higher protein → more worsening
+# =============================================================================
+
+# Build design matrix with continuous predictor
+# Note: ~MRSS_signed (with intercept) vs ~0+MRSS_signed (without)
+# With intercept is standard for continuous regression
+design_continuous <- model.matrix(~MRSS_signed + Visit_Year, data = filtered_metadata)
+
+# Fit linear model
+fit_continuous <- lmFit(data_matrix2, design_continuous)
+fit_continuous <- eBayes(fit_continuous)
+
+# Extract results for the MRSS_signed coefficient specifically
+# coef = "MRSS_signed" extracts just the slope, not the intercept or year effects
+continuous_results <- topTable(fit_continuous, coef = "MRSS_signed", number = Inf, adjust.method = "BH")
+continuous_results$OlinkID <- rownames(continuous_results)
+continuous_results <- continuous_results %>% left_join(gene_lookup, by = "OlinkID")
+
+# Summary
+cat("=== CONTINUOUS ANALYSIS: Correlation with ΔMRSS ===\n")
+cat("MRSS_signed range:", range(filtered_metadata$MRSS_signed), "\n")
+cat("FDR < 0.05:", sum(continuous_results$adj.P.Val < 0.05), "\n")
+cat("FDR < 0.1:", sum(continuous_results$adj.P.Val < 0.1), "\n")
+cat("FDR < 0.2:", sum(continuous_results$adj.P.Val < 0.2), "\n")
+cat("FDR < 0.3:", sum(continuous_results$adj.P.Val < 0.3), "\n")
+cat("Nominal p < 0.05:", sum(continuous_results$P.Value < 0.05), "\n")
+```
+
+```{r continuous-top-hits}
+# Display top hits
+# logFC here = NPX change per 1-unit ΔMRSS (not per group like binary analysis)
+continuous_results %>%
+  select(Assay, logFC, AveExpr, P.Value, adj.P.Val) %>%
+  head(30)
+```
+
+```{r continuous-effect-size}
+# =============================================================================
+# PURPOSE: Convert logFC to biologically meaningful effect sizes
+#
+# WHY: logFC from continuous analysis is "per 1-unit MRSS change"
+#      To understand total effect, multiply by the range of MRSS changes observed
+#
+# EXAMPLE: If logFC = 0.02 and MRSS range is -10 to +20 (span = 30)
+#          Total effect = 0.02 × 30 = 0.6 NPX units
+#          Fold change = 2^0.6 ≈ 1.5× (50% difference across the range)
+# =============================================================================
+
+mrss_span <- diff(range(filtered_metadata$MRSS_signed))
+
+continuous_results %>%
+  filter(P.Value < 0.01) %>%
+  mutate(
+    # Total NPX change across the full range of MRSS values
+    total_effect_NPX = logFC * mrss_span,
+    # Convert to fold change (NPX is log2 scale)
+    fold_change = round(2^total_effect_NPX, 2)
+  ) %>%
+  select(Assay, logFC, total_effect_NPX, fold_change, P.Value, adj.P.Val) %>%
+  head(20)
+```
+
+---
+
+# 7. Analysis C: Regressor vs Progressor (Binary)
+
+**Excludes Stable patients** — compares only the extremes.
+
+```{r subset-prog-reg}
+# =============================================================================
+# PURPOSE: Compare only Regressors vs Progressors (exclude Stable)
+#
+# WHY EXCLUDE STABLE:
+# - Stable patients neither improved nor worsened significantly
+# - They may represent a biologically distinct group OR measurement noise
+# - Comparing "improvers vs worseners" directly maximizes contrast
+# - This is a more stringent test: can we distinguish true opposites?
+#
+# TRADEOFF: Smaller sample size (lose Stable patients)
+#           vs cleaner biological distinction
+# =============================================================================
+
+# Subset to Regressor and Progressor only
+meta_prog_reg <- filtered_metadata %>%
+  filter(Classification %in% c("Regressor", "Progressor")) %>%
+  # Set Progressor as reference level (positive logFC = higher in Regressor)
+  mutate(Classification = factor(Classification, levels = c("Progressor", "Regressor")))
+
+cat("Regressor vs Progressor subset:\n")
+print(table(meta_prog_reg$Classification))
+cat("Total n =", nrow(meta_prog_reg), "\n")
+
+# Subset the expression matrix to match
+keep_prog_reg <- as.character(meta_prog_reg$EUSTAR_Number)
+data_prog_reg <- data_matrix2[, colnames(data_matrix2) %in% keep_prog_reg]
+
+# CRITICAL: Re-align metadata to subsetted matrix
+meta_prog_reg <- meta_prog_reg[match(colnames(data_prog_reg),
+                                      as.character(meta_prog_reg$EUSTAR_Number)), ]
+stopifnot(all(colnames(data_prog_reg) == as.character(meta_prog_reg$EUSTAR_Number)))
+cat("✓ Alignment verified\n")
+```
+
+```{r limma-binary-prog-reg}
+# =============================================================================
+# PURPOSE: Limma differential expression — Regressor vs Progressor
+#
+# Same approach as Analysis A, but on the subset without Stable patients
+# =============================================================================
+
+# Design matrix with Visit_Year adjustment
+design_prog_reg <- model.matrix(~0 + Classification + Visit_Year, data = meta_prog_reg)
+
+# Fit linear model
+fit_prog_reg <- lmFit(data_prog_reg, design_prog_reg)
+
+# Contrast: Regressor vs Progressor
+contrast_prog_reg <- makeContrasts(
+  Regressor_vs_Progressor = ClassificationRegressor - ClassificationProgressor,
+  levels = design_prog_reg
+)
+
+fit_prog_reg2 <- contrasts.fit(fit_prog_reg, contrast_prog_reg)
+fit_prog_reg2 <- eBayes(fit_prog_reg2)
+
+# Extract results
+binary_prog_reg_results <- topTable(fit_prog_reg2, coef = 1, number = Inf, adjust.method = "BH")
+binary_prog_reg_results$OlinkID <- rownames(binary_prog_reg_results)
+binary_prog_reg_results <- binary_prog_reg_results %>% left_join(gene_lookup, by = "OlinkID")
+
+# Summary
+cat("=== BINARY COMPARISON: Regressor vs Progressor ===\n")
+cat("FDR < 0.05:", sum(binary_prog_reg_results$adj.P.Val < 0.05), "\n")
+cat("FDR < 0.1:", sum(binary_prog_reg_results$adj.P.Val < 0.1), "\n")
+cat("FDR < 0.2:", sum(binary_prog_reg_results$adj.P.Val < 0.2), "\n")
+cat("Nominal p < 0.05:", sum(binary_prog_reg_results$P.Value < 0.05), "\n")
+```
+
+```{r binary-prog-reg-top-hits}
+# Top hits
+binary_prog_reg_results %>%
+  select(Assay, logFC, AveExpr, P.Value, adj.P.Val) %>%
+  head(30)
+```
+
+---
+
+# 8. Analysis D: Continuous Correlation (Regressor vs Progressor Only)
+
+**Question:** Among patients who definitively improved or worsened, which proteins correlate with degree of change?
+
+```{r limma-continuous-prog-reg}
+# =============================================================================
+# PURPOSE: Continuous correlation on the Regressor/Progressor subset
+#
+# WHY THIS ANALYSIS:
+# - Combines the benefits of continuous (uses full ΔMRSS range) with
+#   the cleaner comparison (excludes ambiguous Stable patients)
+# - Stable patients cluster around ΔMRSS = 0, potentially adding noise
+# - Removing them may increase power to detect real correlations
+#
+# EXPECTED DIFFERENCE FROM ANALYSIS B:
+# - Wider MRSS_signed range (no values near 0 from Stable patients)
+# - Potentially stronger correlations if Stable were adding noise
+# - Potentially weaker if sample size reduction hurts more than noise removal helps
+# =============================================================================
+
+# Design matrix with continuous predictor
+design_cont_prog_reg <- model.matrix(~MRSS_signed + Visit_Year, data = meta_prog_reg)
+
+# Fit and moderate
+fit_cont_prog_reg <- lmFit(data_prog_reg, design_cont_prog_reg)
+fit_cont_prog_reg <- eBayes(fit_cont_prog_reg)
+
+# Extract results for MRSS_signed coefficient
+continuous_prog_reg_results <- topTable(fit_cont_prog_reg, coef = "MRSS_signed", number = Inf, adjust.method = "BH")
+continuous_prog_reg_results$OlinkID <- rownames(continuous_prog_reg_results)
+continuous_prog_reg_results <- continuous_prog_reg_results %>% left_join(gene_lookup, by = "OlinkID")
+
+# Summary
+cat("=== CONTINUOUS ANALYSIS: Regressor vs Progressor Only ===\n")
+cat("MRSS_signed range:", range(meta_prog_reg$MRSS_signed), "\n")
+cat("FDR < 0.05:", sum(continuous_prog_reg_results$adj.P.Val < 0.05), "\n")
+cat("FDR < 0.1:", sum(continuous_prog_reg_results$adj.P.Val < 0.1), "\n")
+cat("FDR < 0.2:", sum(continuous_prog_reg_results$adj.P.Val < 0.2), "\n")
+cat("Nominal p < 0.05:", sum(continuous_prog_reg_results$P.Value < 0.05), "\n")
+```
+
+```{r continuous-prog-reg-top-hits}
+# Top hits
+continuous_prog_reg_results %>%
+  select(Assay, logFC, AveExpr, P.Value, adj.P.Val) %>%
+  head(30)
+```
+
+```{r}
+## Boxplot (Regressor vs Progressor Only)
+
+plot_protein_boxplot_RP <- function(protein_id, gene_name = NULL) {
+  # PURPOSE: Boxplot for Regressor vs Progressor comparison (excludes Stable)
+  # Shows Wilcoxon p-value for binary comparison
+
+  # Auto-lookup gene name if not provided
+  if (is.null(gene_name)) {
+    gene_name <- gene_lookup$Assay[gene_lookup$OlinkID == protein_id]
+    if (length(gene_name) == 0 || is.na(gene_name)) gene_name <- protein_id
+  }
+
+  # Use R vs P subset data
+  plot_data <- data.frame(
+    Expression = data_prog_reg[protein_id, ],
+    Group = meta_prog_reg$Classification
+  )
+
+  p <- ggplot(plot_data, aes(x = Group, y = Expression, fill = Group)) +
+    geom_violin(alpha = 0.3, width = 0.8, color = NA, trim = TRUE) +
+    geom_boxplot(width = 0.2, outlier.shape = NA, alpha = 0.8) +
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6) +
+    stat_compare_means(method = "wilcox.test", label = "p.format",
+                       label.x.npc = "center", label.y.npc = 0.95) +
+    scale_fill_manual(values = c("Progressor" = "#AF3B6E", "Regressor" = "#48639C")) +
+    labs(title = gene_name, x = NULL, y = "NPX") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+          legend.position = "none")
+
+  return(p)
+}
+## Scatterplot (Regressor vs Progressor Only)
+
+plot_protein_scatter_RP <- function(protein_id, gene_name = NULL) {
+  # PURPOSE: Scatterplot for R vs P subset showing correlation with ΔMRSS
+
+  # Auto-lookup gene name
+  if (is.null(gene_name)) {
+    gene_name <- gene_lookup$Assay[gene_lookup$OlinkID == protein_id]
+    if (length(gene_name) == 0 || is.na(gene_name)) gene_name <- protein_id
+  }
+
+  # Get ADJUSTED p-value from R vs P continuous analysis
+  cont_row <- continuous_prog_reg_results %>% filter(OlinkID == protein_id)
+  pval_text <- if (nrow(cont_row) > 0) sprintf("FDR = %.2g", cont_row$adj.P.Val) else ""
+
+  plot_data <- data.frame(
+    Expression = data_prog_reg[protein_id, ],
+    MRSS_signed = meta_prog_reg$MRSS_signed,
+    Group = meta_prog_reg$Classification
+  )
+
+  p <- ggplot(plot_data, aes(x = MRSS_signed, y = Expression)) +
+    geom_point(aes(color = Group), size = 2.5, alpha = 0.7) +
+    geom_smooth(method = "lm", se = TRUE, color = "black", linewidth = 0.8) +
+    scale_color_manual(values = c("Progressor" = "#AF3B6E", "Regressor" = "#48639C")) +
+    labs(title = gene_name, subtitle = pval_text,
+         x = "ΔMRSS (positive = improvement)", y = "NPX") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+          plot.subtitle = element_text(hjust = 0.5, color = "gray40"))
+
+  return(p)
+}
+
+
+```
+
+---
+
+# 9. Sensitivity Analysis: Time-Balanced Subset
+
+```{r check-confounding}
+# =============================================================================
+# PURPOSE: Check for confounding between PatientGroup and Visit_Year
+#
+# WHY THIS MATTERS:
+# - If all Progressors were sampled in 2022-2023 and all Regressors in 2014-2021,
+#   any "group difference" might actually be a batch effect
+# - This table reveals the extent of confounding
+# =============================================================================
+
+cat("=== CONFOUNDING CHECK: Group × Visit_Year ===\n")
+print(table(filtered_metadata$PatientGroup, filtered_metadata$Visit_Year))
+```
+
+```{r sensitivity-analysis}
+# =============================================================================
+# PURPOSE: Sensitivity analysis restricted to time-balanced years
+#
+# WHY: The full dataset has Visit_Year confounded with PatientGroup.
+#      Some years have only one group represented.
+#      By restricting to years with BOTH groups, we can:
+#      1. Test if results hold without batch adjustment
+#      2. Identify proteins that are robust vs potentially batch-driven
+#
+# INTERPRETATION:
+# - Proteins significant in BOTH full and sensitivity analyses = robust
+# - Proteins significant only in full analysis = may be batch effects
+# - Proteins significant only in sensitivity = may be real but underpowered in full
+#
+# LIMITATION: Smaller sample size reduces power
+# =============================================================================
+
+# Restrict to years where both groups are represented
+overlapping_years <- c("2014", "2019", "2020", "2021")
+
+meta_sensitivity <- filtered_metadata %>%
+  filter(Visit_Year %in% overlapping_years)
+
+cat("\nSensitivity analysis sample:\n")
+print(table(meta_sensitivity$PatientGroup, meta_sensitivity$Visit_Year))
+cat("Total n =", nrow(meta_sensitivity), "\n")
+
+# Subset expression matrix
+keep_samples <- as.character(meta_sensitivity$EUSTAR_Number)
+data_sensitivity <- data_matrix2[, colnames(data_matrix2) %in% keep_samples]
+
+# Align metadata
+meta_sensitivity <- meta_sensitivity[match(colnames(data_sensitivity),
+                                            as.character(meta_sensitivity$EUSTAR_Number)), ]
+stopifnot(all(colnames(data_sensitivity) == as.character(meta_sensitivity$EUSTAR_Number)))
+
+# Run continuous model WITHOUT Visit_Year adjustment
+# WHY: Within overlapping years, groups are more balanced
+#      This tests if results hold without needing batch correction
+design_sensitivity <- model.matrix(~MRSS_signed, data = meta_sensitivity)
+fit_sensitivity <- lmFit(data_sensitivity, design_sensitivity)
+fit_sensitivity <- eBayes(fit_sensitivity)
+
+sensitivity_results <- topTable(fit_sensitivity, coef = "MRSS_signed", number = Inf, adjust.method = "BH")
+sensitivity_results$OlinkID <- rownames(sensitivity_results)
+sensitivity_results <- sensitivity_results %>% left_join(gene_lookup, by = "OlinkID")
+
+cat("\n=== SENSITIVITY ANALYSIS RESULTS ===\n")
+cat("FDR < 0.05:", sum(sensitivity_results$adj.P.Val < 0.05), "\n")
+cat("FDR < 0.1:", sum(sensitivity_results$adj.P.Val < 0.1), "\n")
+cat("Nominal p < 0.05:", sum(sensitivity_results$P.Value < 0.05), "\n")
+```
+
+```{r sensitivity-top-hits}
+# Top hits from sensitivity analysis
+sensitivity_results %>%
+  select(Assay, logFC, P.Value, adj.P.Val) %>%
+  head(20)
+```
+
+---
+
+# 10. Compare Results Across All Analyses
+
+```{r compare-analyses}
+# =============================================================================
+# PURPOSE: Compare each candidate protein across all 5 analyses
+#
+# WHY: A protein that is significant in only ONE analysis may be:
+# - A batch effect (significant only when not adjusting properly)
+# - Driven by a few outliers in one subset
+# - A true finding that's underpowered in other analyses
+#
+# ROBUST FINDINGS should show:
+# - Consistent direction (logFC same sign) across analyses
+# - Significant (or trending) p-values in multiple analyses
+# - Survival in sensitivity analysis = not a batch effect
+# =============================================================================
+
+compare_protein <- function(protein_name) {
+  binary <- binary_results %>% filter(Assay == protein_name) %>%
+    select(Assay, logFC, P.Value, adj.P.Val) %>% mutate(Analysis = "Binary (R vs NR)")
+
+  continuous <- continuous_results %>% filter(Assay == protein_name) %>%
+    select(Assay, logFC, P.Value, adj.P.Val) %>% mutate(Analysis = "Continuous (all)")
+
+  binary_pr <- binary_prog_reg_results %>% filter(Assay == protein_name) %>%
+    select(Assay, logFC, P.Value, adj.P.Val) %>% mutate(Analysis = "Binary (R vs P)")
+
+  continuous_pr <- continuous_prog_reg_results %>% filter(Assay == protein_name) %>%
+    select(Assay, logFC, P.Value, adj.P.Val) %>% mutate(Analysis = "Continuous (R vs P)")
+
+  sensitivity <- sensitivity_results %>% filter(Assay == protein_name) %>%
+    select(Assay, logFC, P.Value, adj.P.Val) %>% mutate(Analysis = "Sensitivity")
+
+  bind_rows(binary, continuous, binary_pr, continuous_pr, sensitivity)
+}
+
+# Check candidate proteins (add your proteins of interest here)
+candidates <- c("MMP1", "SERPINE2", "TIMP1", "TGFB1")
+
+cat("=== CANDIDATE PROTEIN COMPARISON ===\n\n")
+for (protein in candidates) {
+  cat(protein, ":\n")
+  print(compare_protein(protein))
+  cat("\n")
+}
+```
+
+---
+
+# 11. Healthy Controls for Visualization
+
+```{r prepare-hc}
+# =============================================================================
+# PURPOSE: Prepare healthy control (HC) samples for plotting
+#
+# WHY INCLUDE HC:
+# - Provides biological context: are patient levels abnormal?
+# - Helps visualize whether Regressors normalize toward healthy levels
+# - NOT included in statistical models (different context, no MRSS)
+# =============================================================================
+
+# Extract HC samples (identified by sample ID pattern)
+hc_npx <- npx_data %>%
+  filter(grepl("^HC-OL", SampleID))
+
+hc_sample_ids <- unique(hc_npx$SampleID)
+cat("Found", length(hc_sample_ids), "HC samples\n")
+
+# Create HC expression matrix (same format as patient matrix)
+hc_matrix_df <- hc_npx %>%
+  select(SampleID, NPX, OlinkID) %>%
+  pivot_wider(names_from = SampleID, values_from = NPX, id_cols = OlinkID)
+
+hc_matrix <- as.data.frame(hc_matrix_df)
+rownames(hc_matrix) <- hc_matrix$OlinkID
+hc_matrix <- hc_matrix[, -1]
+hc_matrix <- apply(as.matrix(hc_matrix), 2, as.numeric)
+rownames(hc_matrix) <- hc_matrix_df$OlinkID
+```
+
+```{r combine-for-plotting}
+# =============================================================================
+# PURPOSE: Create combined dataset for visualization with batch adjustment
+#
+# WHY ADJUST FOR VISIT_YEAR:
+# - Patients were collected over multiple years (potential batch effects)
+# - HC samples collected at one timepoint (no year adjustment possible)
+# - For fair comparison, we remove estimated Visit_Year effects from patients
+#
+# HOW: Subtract the fitted Visit_Year coefficients from patient NPX values
+# =============================================================================
+
+# Extract Visit_Year effect from the fitted model
+visit_cols <- grep("^Visit_Year", colnames(design_binary))
+visit_effect <- fit_binary$coefficients[, visit_cols, drop = FALSE] %*% t(design_binary[, visit_cols, drop = FALSE])
+
+# Subtract year effects from patient data
+adjusted_npx <- data_matrix2 - visit_effect
+
+# Combine patient (adjusted) and HC (raw) matrices
+common_proteins <- intersect(rownames(adjusted_npx), rownames(hc_matrix))
+combined_matrix <- cbind(
+  adjusted_npx[common_proteins, ],
+  hc_matrix[common_proteins, ]
+)
+
+# Create combined metadata
+combined_metadata <- bind_rows(
+  filtered_metadata %>%
+    select(SampleID = EUSTAR_Number, PatientGroup) %>%
+    mutate(SampleID = as.character(SampleID)),
+  data.frame(SampleID = hc_sample_ids, PatientGroup = "Healthy")
+) %>%
+  # Set factor order for plotting (Healthy first as reference)
+  mutate(PatientGroup = factor(PatientGroup, levels = c("Healthy", "Non_Regressor", "Regressor")))
+
+# Align metadata to matrix
+combined_metadata <- combined_metadata[match(colnames(combined_matrix), combined_metadata$SampleID), ]
+stopifnot(all(colnames(combined_matrix) == combined_metadata$SampleID))
+
+cat("Combined data:", ncol(combined_matrix), "samples\n")
+print(table(combined_metadata$PatientGroup))
+```
+
+---
+
+# 12. Plotting Functions
+
+```{r plotting-functions-intro}
+# =============================================================================
+# PURPOSE: Reusable functions to visualize individual proteins
+#
+# TWO VISUALIZATION TYPES:
+# 1. Boxplot: Shows group distributions (matches binary analysis)
+# 2. Scatterplot: Shows correlation with ΔMRSS (matches continuous analysis)
+#
+# USAGE:
+#   plot_protein_boxplot("OID44783")  # By Olink ID
+#   plot_protein_boxplot("OID44783", gene_name = "MMP1")  # With custom title
+#   plot_protein_scatter("OID44783")
+# =============================================================================
+```
+
+## Boxplot (Binary Comparison)
+
+```{r plot-function-boxplot}
+plot_protein_boxplot <- function(protein_id, gene_name = NULL, show_hc = TRUE) {
+  # PURPOSE: Visualize protein expression by group
+  # protein_id: Olink ID (e.g., "OID44783")
+  # gene_name: Optional label override
+  # show_hc: Include healthy controls (uses batch-adjusted data)
+
+  # Auto-lookup gene name if not provided
+  if (is.null(gene_name)) {
+    gene_name <- gene_lookup$Assay[gene_lookup$OlinkID == protein_id]
+    if (length(gene_name) == 0 || is.na(gene_name)) gene_name <- protein_id
+  }
+
+  # Select appropriate data (with or without HC)
+  if (show_hc) {
+    plot_data <- data.frame(
+      Expression = combined_matrix[protein_id, ],
+      Group = combined_metadata$PatientGroup
+    )
+    comparisons <- list(c("Regressor", "Non_Regressor"))
+  } else {
+    plot_data <- data.frame(
+      Expression = data_matrix2[protein_id, ],
+      Group = filtered_metadata$PatientGroup
+    )
+    comparisons <- list(c("Regressor", "Non_Regressor"))
+  }
+
+  p <- ggplot(plot_data, aes(x = Group, y = Expression, fill = Group)) +
+    # Violin shows distribution shape
+    geom_violin(alpha = 0.3, width = 0.8, color = NA, trim = TRUE) +
+    # Box shows median and IQR
+    geom_boxplot(width = 0.2, outlier.shape = NA, alpha = 0.8) +
+    # Points show individual samples (critical for small n)
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6) +
+    # Add Wilcoxon test p-value
+    stat_compare_means(method = "wilcox.test", comparisons = comparisons,
+                       label = "p.format", tip.length = 0.02) +
+    scale_fill_manual(values = c("Healthy" = "#2E8B57",
+                                  "Non_Regressor" = "#AF3B6E",
+                                  "Regressor" = "#48639C")) +
+    labs(title = gene_name, x = NULL, y = "NPX") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+          legend.position = "none")
+
+  return(p)
+}
+```
+
+## Scatterplot (Continuous Correlation)
+
+```{r plot-function-scatter}
+plot_protein_scatter <- function(protein_id, gene_name = NULL) {
+  # PURPOSE: Visualize protein correlation with ΔMRSS
+  # Shows the continuous relationship that limma is modeling
+
+  # Auto-lookup gene name
+  if (is.null(gene_name)) {
+    gene_name <- gene_lookup$Assay[gene_lookup$OlinkID == protein_id]
+    if (length(gene_name) == 0 || is.na(gene_name)) gene_name <- protein_id
+  }
+
+  # Get p-value from continuous analysis for annotation
+  cont_row <- continuous_results %>% filter(OlinkID == protein_id)
+  pval_text <- if (nrow(cont_row) > 0) sprintf("p = %.2g", cont_row$P.Value) else ""
+
+  plot_data <- data.frame(
+    Expression = data_matrix2[protein_id, ],
+    MRSS_signed = filtered_metadata$MRSS_signed,
+    Group = filtered_metadata$PatientGroup
+  )
+
+  p <- ggplot(plot_data, aes(x = MRSS_signed, y = Expression)) +
+    # Color points by group to show overlap/separation
+    geom_point(aes(color = Group), size = 2.5, alpha = 0.7) +
+    # Add regression line (this is what limma is fitting)
+    geom_smooth(method = "lm", se = TRUE, color = "black", linewidth = 0.8) +
+    scale_color_manual(values = c("Non_Regressor" = "#AF3B6E", "Regressor" = "#48639C")) +
+    labs(title = gene_name, subtitle = pval_text,
+         x = "ΔMRSS (positive = improvement)", y = "NPX") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, color = "gray40"))
+
+  return(p)
+}
+```
+
+---
+
+# 13. Volcano Plot
+
+```{r volcano-plot, fig.width=8, fig.height=6}
+# =============================================================================
+# PURPOSE: Visualize all proteins simultaneously
+#
+# VOLCANO PLOT ANATOMY:
+# - X-axis: Effect size (log2 fold change)
+# - Y-axis: Statistical significance (-log10 p-value)
+# - Upper corners: Large effect + significant (candidates)
+# - Middle: Small effect (even if significant, may not be meaningful)
+#
+# COLOR CODING:
+# - Red: FDR < 0.1 (multiple testing corrected)
+# - Orange: Nominal p < 0.05 (uncorrected)
+# - Gray: Not significant
+# =============================================================================
+
+binary_results <- binary_results %>%
+  mutate(Significance = case_when(
+    adj.P.Val < 0.1 ~ "FDR < 0.1",
+    P.Value < 0.05 ~ "Nominal",
+    TRUE ~ "NS"
+  ))
+
+volcano <- ggplot(binary_results, aes(x = logFC, y = -log10(P.Value))) +
+  geom_point(aes(color = Significance), alpha = 0.6, size = 2) +
+  # Horizontal line: nominal significance threshold
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "gray50") +
+  # Vertical lines: effect size threshold (|logFC| > 0.5 = 1.4-fold)
+  geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed", color = "gray50") +
+  # Label top hits
+  geom_text_repel(
+    data = binary_results %>% filter(P.Value < 0.01),
+    aes(label = Assay), size = 3, max.overlaps = 20
+  ) +
+  scale_color_manual(values = c("FDR < 0.1" = "#E41A1C", "Nominal" = "#FF7F00", "NS" = "gray70")) +
+  labs(title = "Volcano Plot: Regressor vs Non_Regressor",
+       x = "log2 Fold Change", y = "-log10(P-value)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# Save volcano as PDF
+ggsave(file.path(output_dir, "volcano_Regressor_vs_NonRegressor.pdf"), volcano, width = 8, height = 6)
+
+print(volcano)
+```
+
+---
+
+# 14. Filter by Average Expression (Optional)
+
+```{r filter-by-expression}
+# =============================================================================
+# PURPOSE: Reduce multiple testing burden by filtering low-abundance proteins
+#
+# RATIONALE:
+# - Low-abundance proteins (low AveExpr) are measured with more noise
+# - They contribute to multiple testing correction but rarely yield true signals
+# - Filtering them BEFORE p-value adjustment can improve FDR for remaining proteins
+#
+# THRESHOLD CHOICE (AveExpr > 1):
+# - NPX is log2 scale, so AveExpr = 1 means ~2-fold above background
+# - This is a conservative filter; adjust based on your data distribution
+#
+# IMPORTANT: Must recalculate adjusted p-values after filtering!
+# The original adj.P.Val was computed across ALL proteins.
+# =============================================================================
+
+continuous_filtered <- continuous_results %>%
+  filter(AveExpr > 0)
+
+cat("Before filter:", nrow(continuous_results), "proteins\n")
+cat("After filter (AveExpr > 1):", nrow(continuous_filtered), "proteins\n")
+
+# CRITICAL: Recalculate FDR on the filtered subset
+continuous_filtered$adj.P.Val_filtered <- p.adjust(continuous_filtered$P.Value, method = "BH")
+
+cat("\nTop hits after filtering:\n")
+continuous_filtered %>%
+  select(Assay, logFC, AveExpr, P.Value, adj.P.Val_filtered) %>%
+  head(20)
+```
+
+---
+
+# 15. Export Results
+
+```{r export}
+# =============================================================================
+# PURPOSE: Save all results for downstream use
+#
+# OUTPUT FILES:
+# 1. Binary Regressor vs Non_Regressor: includes Stable in Non_Regressor
+# 2. Continuous (all): correlation with ΔMRSS, all patients
+# 3. Binary Regressor vs Progressor: excludes Stable
+# 4. Continuous (R vs P): correlation, excludes Stable
+# 5. Sensitivity: time-balanced subset, no batch adjustment
+#
+# COLUMNS IN OUTPUT:
+# - logFC: log2 fold change (interpret based on analysis type)
+# - AveExpr: average expression (higher = more abundant/reliable)
+# - t: moderated t-statistic
+# - P.Value: nominal p-value
+# - adj.P.Val: FDR-adjusted p-value (Benjamini-Hochberg)
+# - B: log-odds of differential expression
+# - OlinkID: Olink protein identifier
+# - Assay: Gene symbol
+# =============================================================================
+
+write.csv(binary_results, file.path(output_dir, "results_binary_Regressor_vs_NonRegressor.csv"), row.names = FALSE)
+write.csv(continuous_results, file.path(output_dir, "results_continuous_MRSS_correlation.csv"), row.names = FALSE)
+write.csv(binary_prog_reg_results, file.path(output_dir, "results_binary_Regressor_vs_Progressor.csv"), row.names = FALSE)
+write.csv(continuous_prog_reg_results, file.path(output_dir, "results_continuous_Regressor_vs_Progressor.csv"), row.names = FALSE)
+write.csv(sensitivity_results, file.path(output_dir, "results_sensitivity_timebalanced.csv"), row.names = FALSE)
+
+cat("Exported:\n")
+cat("- results_binary_Regressor_vs_NonRegressor.csv\n")
+cat("- results_continuous_MRSS_correlation.csv\n")
+cat("- results_binary_Regressor_vs_Progressor.csv\n")
+cat("- results_continuous_Regressor_vs_Progressor.csv\n")
+cat("- results_sensitivity_timebalanced.csv\n")
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```
