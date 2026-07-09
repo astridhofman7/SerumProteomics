@@ -95,14 +95,10 @@ colours_class <- c(
 # =============================================================================
 
 # Load Olink data
-olink <- read_parquet("/Users/astrid/Desktop/PhD /RESOLVE_SerumProteomics/data/P2024-199-OLI_80_NPX_2024-10-10.parquet")
+olink <- read_parquet("/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/P2024-199-OLI_80_NPX_2024-10-10.parquet")
 
 # Load metadata (sheet 2)
-metadata <- read_excel("/Users/astrid/Desktop/PhD /RESOLVE_SerumProteomics/data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx", sheet = 2)
-
-
-# Option 2: If data is relative to where the .Rmd file is
-olink <- read_parquet("../data/P2024-199-OLI_80_NPX_2024-10-10.parquet")
+metadata <- read_excel("/Users/astrid/Desktop/PhD/RESOLVE_SerumProteomics/data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx", sheet = 2)
 
 cat("Olink samples:", length(unique(olink$SampleID)), "\n")
 cat("Metadata samples:", nrow(metadata), "\n")
