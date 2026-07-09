@@ -17,6 +17,12 @@ navbar:
           href: SSc_Skin_Regression_Analysis.html
         - text: "Pathway Enrichment Analysis (Analysis D)"
           href: RESOLVE_AnalysisD_PathwayEnrichment.html
+    - text: "ILD Onset"
+      menu:
+        - text: "Identification of Deregulated Proteins"
+          href: SSc_ILD_Onset_Analysis_Clean.html
+        - text: "Pathway Enrichment Analysis"
+          href: SSc_ILD_Onset_Pathway_Enrichment.html
     - text: "About"
       href: about.html
   right:
