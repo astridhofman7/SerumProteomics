@@ -9,7 +9,7 @@ navbar:
       menu:
         - text: "PreSSc Synovitis vs. No Synovitis"
           href: PreSSc_Synovitis.html
-        - text: "PreSSc Arthritis versus SSc Arthritis"
+        - text: "PreSSc Arthritis vs. SSc Arthritis"
           href: PreSScArthritis_vs_SScArthritis.html
     - text: "RESOLVE"
       menu:
