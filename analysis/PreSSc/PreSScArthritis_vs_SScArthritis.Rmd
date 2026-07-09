@@ -74,7 +74,6 @@ cat("Output directory:", output_dir, "\n")
 # =============================================================================
 # PURPOSE: Define consistent color schemes
 # =============================================================================
-
 colours_class <- c(
   "veSSc" = "#3498DB",   # Blue - very early SSc
   "SSc" = "#E74C3C"      # Red - established SSc
