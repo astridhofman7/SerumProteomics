@@ -17,4 +17,5 @@ editor_options:
 
 ### RESOLVE
 
-1. [Analysis Types: Binary vs. Continuous](SSc_Skin_Regression_Analysis.html)
+1. [Analysis Types: Binary vs. Continuous](RESOLVE_SSc_Skin_Regression_Analysis.html)
+2. [Pathway Enrichment Analysis (Analysis D)](RESOLVE_AnalysisD_PathwayEnrichment.html)
