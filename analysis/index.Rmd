@@ -11,5 +11,5 @@ RESOLVE: Serum Proteomics
 
 PreSSc
 
-* [1. PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
+[1. PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
 
