@@ -5,7 +5,11 @@ output:
   workflowr::wflow_html:
     toc: false
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
+RESOLVE: Serum Proteomics
 
-Welcome to my research website.
+##PreSSc
+
+* [1. PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
+
