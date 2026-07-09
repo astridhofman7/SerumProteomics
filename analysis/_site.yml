@@ -1,21 +1,23 @@
-name: RESOLVE_SerumProteomics
-output_dir: ../docs
+name: "Serum Proteomics"
+output_dir: "../docs"
 navbar:
-  title: RESOLVE_SerumProteomics
+  title: "Serum Proteomics"
   left:
-  - text: Home
-    href: index.html
-  - text: About
-    href: about.html
-  - text: License
-    href: license.html
+    - text: "Home"
+      href: index.html
+    - text: "PreSSc"
+      menu:
+        - text: "PreSSc Synovitis vs. No Synovitis"
+          href: PreSSc_Synovitis.html.html
+        - text: "PreSSc Arthritis versus SSc Arthritis"
+          href: PreSScArthritis_vs_SScArthritis.html
+    - text: "About"
+      href: about.html
   right:
-  - icon: fab fa-github
-    text: Source code
-    href: https://github.com/astridhofman7/RESOLVE_SerumProteomics
+    - icon: fa-github
+      href: https://github.com/astridhofman7/SerumProteomics
 output:
   workflowr::wflow_html:
-    toc: yes
-    toc_float: yes
-    theme: cosmo
-    highlight: textmate
+    toc: true
+    toc_float: true
+    theme: united
