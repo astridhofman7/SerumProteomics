@@ -9,7 +9,7 @@ editor_options:
 ---
 RESOLVE: Serum Proteomics
 
-##PreSSc
+PreSSc
 
 * [1. PreSSc Arthritis versus SSc Arthritis](PreSScArthritis_vs_SScArthritis.html)
 
