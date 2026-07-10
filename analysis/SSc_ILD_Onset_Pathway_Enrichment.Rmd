@@ -1,0 +1,657 @@
+---
+title: "SSc Proteomics: Pathway Enrichment Analysis"
+author: "Analysis Script"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Overview
+
+Pathway enrichment analysis on protein hits from the **ILD Onset vs No ILD Onset** binary analysis.
+
+**Hit selection:**
+- Filter for AveExpr > 0 (reliably detected proteins)
+- Recalculate FDR on filtered set
+- Apply FDR < 0.2 threshold
+
+**Enrichment approaches:**
+1. **All hits** — combined analysis
+2. **Up in ILD onset** — proteins higher in patients who develop ILD
+3. **Down in ILD onset** — proteins lower in patients who develop ILD
+
+```{r libraries}
+# =============================================================================
+# REQUIRED PACKAGES
+# Install if needed:
+#   BiocManager::install(c("clusterProfiler", "org.Hs.eg.db", "enrichplot", "ReactomePA"))
+#   install.packages("msigdbr")
+# =============================================================================
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+# Enrichment analysis
+library(clusterProfiler)    # GO, KEGG enrichment
+library(org.Hs.eg.db)       # Human gene annotation
+library(enrichplot)         # Visualization
+library(ReactomePA)         # Reactome pathway analysis
+
+# Gene sets
+library(msigdbr)            # MSigDB gene sets (Hallmark, etc.)
+```
+
+---
+
+# 1. Load Results
+
+```{r load-results}
+# =============================================================================
+# PURPOSE: Load results from the ILD onset binary analysis
+#
+# This should be the output from your main analysis script
+# (results_ILDonset_vs_NoILDonset_all.csv)
+# =============================================================================
+
+# Load the binary comparison results
+results <- read.csv(here::here("output", "ILD_Onset_Analysis", "results_ILDonset_vs_NoILDonset_all.csv"))
+
+cat("Loaded", nrow(results), "proteins\n")
+head(results)
+```
+
+---
+
+# 2. Define Protein Hits
+
+```{r define-hits}
+# =============================================================================
+# PURPOSE: Define significant proteins
+#
+# STRATEGY:
+# 1. Filter for reliably detected proteins (AveExpr > 0)
+# 2. Recalculate FDR on filtered set (valid because AveExpr is independent)
+# 3. Apply FDR < 0.2 threshold
+#
+# WHY RECALCULATE FDR:
+# - Original adj.P.Val was calculated on ALL proteins
+# - After filtering, fewer tests → less harsh correction → better power
+# =============================================================================
+
+# Filter and recalculate FDR
+hits_fdr <- results %>%
+  filter(AveExpr > 0) %>%
+  mutate(adj.P.Val = p.adjust(P.Value, method = "BH")) %>%
+  filter(adj.P.Val < 0.2) %>%
+  arrange(P.Value)
+
+cat("=== FDR < 0.2 (after AveExpr > 0 filter) ===\n")
+cat("N proteins:", nrow(hits_fdr), "\n")
+if(nrow(hits_fdr) > 0) {
+  cat("Proteins:", paste(hits_fdr$Assay, collapse = ", "), "\n")
+}
+```
+
+```{r direction-of-change}
+# =============================================================================
+# PURPOSE: Separate up- and down-regulated proteins
+#
+# WHY: Proteins higher vs lower in ILD onset may reflect different biology
+#
+# INTERPRETATION (from binary analysis):
+# - Positive logFC: Higher in ILD onset patients
+# - Negative logFC: Lower in ILD onset patients (higher in controls)
+# =============================================================================
+
+hits_up <- hits_fdr %>% filter(logFC > 0)
+hits_down <- hits_fdr %>% filter(logFC < 0)
+
+cat("=== Direction of Change (FDR < 0.2) ===\n\n")
+cat("Higher in ILD onset (positive logFC):", nrow(hits_up), "\n")
+if(nrow(hits_up) > 0) cat("  ", paste(hits_up$Assay, collapse = ", "), "\n\n")
+
+cat("Lower in ILD onset (negative logFC):", nrow(hits_down), "\n")
+if(nrow(hits_down) > 0) cat("  ", paste(hits_down$Assay, collapse = ", "), "\n")
+```
+
+---
+
+# 3. Gene ID Conversion
+
+```{r convert-ids}
+# =============================================================================
+# PURPOSE: Convert gene symbols to Entrez IDs
+#
+# WHY: clusterProfiler and most pathway databases use Entrez IDs
+#      Gene symbols (like "MMP1") must be converted
+#
+# NOTE: Some genes may not map — this is normal (pseudogenes, novel genes)
+# =============================================================================
+
+if(nrow(hits_fdr) >= 3) {
+  
+  gene_symbols <- hits_fdr$Assay
+  
+  entrez_ids <- bitr(gene_symbols, 
+                     fromType = "SYMBOL", 
+                     toType = "ENTREZID", 
+                     OrgDb = org.Hs.eg.db)
+  
+  cat("Mapped", nrow(entrez_ids), "of", length(gene_symbols), "genes to Entrez IDs\n")
+  
+  # Check which genes failed to map
+  unmapped <- setdiff(gene_symbols, entrez_ids$SYMBOL)
+  if (length(unmapped) > 0) {
+    cat("Unmapped genes:", paste(unmapped, collapse = ", "), "\n")
+  }
+  
+  # Also map direction-specific lists
+  if(nrow(hits_up) >= 2) {
+    entrez_up <- bitr(hits_up$Assay, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db)
+    cat("\nMapped UP genes:", nrow(entrez_up), "\n")
+  }
+  
+  if(nrow(hits_down) >= 2) {
+    entrez_down <- bitr(hits_down$Assay, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db)
+    cat("Mapped DOWN genes:", nrow(entrez_down), "\n")
+  }
+  
+} else {
+  cat("Too few hits for gene ID conversion (need at least 3)\n")
+}
+
+# Create mapping for all results (for GSEA later)
+results_detected <- results %>% filter(AveExpr > 0)
+all_entrez <- bitr(results_detected$Assay, 
+                   fromType = "SYMBOL", 
+                   toType = "ENTREZID", 
+                   OrgDb = org.Hs.eg.db)
+
+cat("\nTotal mapped for GSEA:", nrow(all_entrez), "of", nrow(results_detected), "\n")
+```
+
+---
+
+# 4. GO Enrichment Analysis (All Hits)
+
+```{r go-enrichment}
+# =============================================================================
+# PURPOSE: Gene Ontology enrichment analysis
+#
+# THREE ONTOLOGIES:
+# - BP (Biological Process): What the proteins do together
+# - MF (Molecular Function): Biochemical activities
+# - CC (Cellular Component): Where proteins localize
+#
+# METHOD: Over-representation analysis (ORA)
+# Tests if hit genes are enriched in GO terms vs background
+# =============================================================================
+
+if(exists("entrez_ids") && nrow(entrez_ids) >= 3) {
+  
+  # GO Biological Process
+  go_bp <- enrichGO(gene = entrez_ids$ENTREZID,
+                    OrgDb = org.Hs.eg.db,
+                    ont = "BP",
+                    pAdjustMethod = "BH",
+                    pvalueCutoff = 0.05,
+                    qvalueCutoff = 0.2,
+                    readable = TRUE)
+  
+  cat("=== GO Biological Process ===\n")
+  if (!is.null(go_bp) && nrow(go_bp) > 0) {
+    cat("Significant terms:", nrow(go_bp), "\n")
+    print(head(go_bp@result[, c("Description", "GeneRatio", "pvalue", "p.adjust", "geneID")], 10))
+  } else {
+    cat("No significant terms found\n")
+  }
+  
+} else {
+  cat("Too few mapped genes for GO enrichment\n")
+  go_bp <- NULL
+}
+```
+
+```{r go-mf-cc}
+if(exists("entrez_ids") && nrow(entrez_ids) >= 3) {
+  
+  # GO Molecular Function
+  go_mf <- enrichGO(gene = entrez_ids$ENTREZID,
+                    OrgDb = org.Hs.eg.db,
+                    ont = "MF",
+                    pAdjustMethod = "BH",
+                    pvalueCutoff = 0.05,
+                    qvalueCutoff = 0.2,
+                    readable = TRUE)
+  
+  cat("\n=== GO Molecular Function ===\n")
+  if (!is.null(go_mf) && nrow(go_mf) > 0) {
+    cat("Significant terms:", nrow(go_mf), "\n")
+    print(head(go_mf@result[, c("Description", "GeneRatio", "pvalue", "p.adjust")], 10))
+  } else {
+    cat("No significant terms found\n")
+  }
+  
+  # GO Cellular Component
+  go_cc <- enrichGO(gene = entrez_ids$ENTREZID,
+                    OrgDb = org.Hs.eg.db,
+                    ont = "CC",
+                    pAdjustMethod = "BH",
+                    pvalueCutoff = 0.05,
+                    qvalueCutoff = 0.2,
+                    readable = TRUE)
+  
+  cat("\n=== GO Cellular Component ===\n")
+  if (!is.null(go_cc) && nrow(go_cc) > 0) {
+    cat("Significant terms:", nrow(go_cc), "\n")
+    print(head(go_cc@result[, c("Description", "GeneRatio", "pvalue", "p.adjust")], 10))
+  } else {
+    cat("No significant terms found\n")
+  }
+  
+} else {
+  go_mf <- NULL
+  go_cc <- NULL
+}
+```
+
+```{r go-plots, fig.width=10, fig.height=8}
+# =============================================================================
+# PURPOSE: Visualize GO enrichment results
+# =============================================================================
+
+if (!is.null(go_bp) && nrow(go_bp) > 0) {
+  p1 <- dotplot(go_bp, showCategory = 15, title = "GO Biological Process")
+  print(p1)
+}
+```
+
+---
+
+# 5. Direction-Specific Enrichment
+
+```{r direction-enrichment}
+# =============================================================================
+# PURPOSE: Separate enrichment for UP and DOWN proteins
+#
+# WHY: Proteins elevated in ILD onset may reflect different pathways
+#      than proteins depleted in ILD onset
+# =============================================================================
+
+# UP in ILD onset
+if(exists("entrez_up") && nrow(entrez_up) >= 3) {
+  
+  go_bp_up <- enrichGO(gene = entrez_up$ENTREZID,
+                       OrgDb = org.Hs.eg.db,
+                       ont = "BP",
+                       pAdjustMethod = "BH",
+                       pvalueCutoff = 0.05,
+                       qvalueCutoff = 0.2,
+                       readable = TRUE)
+  
+  cat("=== GO BP: Higher in ILD Onset ===\n")
+  if (!is.null(go_bp_up) && nrow(go_bp_up) > 0) {
+    cat("Significant terms:", nrow(go_bp_up), "\n")
+    print(head(go_bp_up@result[, c("Description", "GeneRatio", "pvalue", "p.adjust")], 10))
+  } else {
+    cat("No significant terms found\n")
+  }
+  
+} else {
+  cat("Too few UP genes for enrichment\n")
+  go_bp_up <- NULL
+}
+
+# DOWN in ILD onset
+if(exists("entrez_down") && nrow(entrez_down) >= 3) {
+  
+  go_bp_down <- enrichGO(gene = entrez_down$ENTREZID,
+                         OrgDb = org.Hs.eg.db,
+                         ont = "BP",
+                         pAdjustMethod = "BH",
+                         pvalueCutoff = 0.05,
+                         qvalueCutoff = 0.2,
+                         readable = TRUE)
+  
+  cat("\n=== GO BP: Lower in ILD Onset ===\n")
+  if (!is.null(go_bp_down) && nrow(go_bp_down) > 0) {
+    cat("Significant terms:", nrow(go_bp_down), "\n")
+    print(head(go_bp_down@result[, c("Description", "GeneRatio", "pvalue", "p.adjust")], 10))
+  } else {
+    cat("No significant terms found\n")
+  }
+  
+} else {
+  cat("Too few DOWN genes for enrichment\n")
+  go_bp_down <- NULL
+}
+```
+
+```{r direction-plots, fig.width=12, fig.height=6}
+if (!is.null(go_bp_up) && nrow(go_bp_up) > 0) {
+  p_up <- dotplot(go_bp_up, showCategory = 15, title = "GO BP: Higher in ILD Onset")
+  print(p_up)
+}
+
+if (!is.null(go_bp_down) && nrow(go_bp_down) > 0) {
+  p_down <- dotplot(go_bp_down, showCategory = 15, title = "GO BP: Lower in ILD Onset")
+  print(p_down)
+}
+```
+
+---
+
+# 6. KEGG Pathway Enrichment
+
+```{r kegg-enrichment}
+# =============================================================================
+# PURPOSE: KEGG pathway enrichment
+#
+# KEGG: Curated pathways for metabolism, signaling, disease
+# Often more interpretable than GO for mechanism-focused questions
+# =============================================================================
+
+if(exists("entrez_ids") && nrow(entrez_ids) >= 3) {
+  
+  kegg <- enrichKEGG(gene = entrez_ids$ENTREZID,
+                     organism = "hsa",
+                     pAdjustMethod = "BH",
+                     pvalueCutoff = 0.05,
+                     qvalueCutoff = 0.2)
+  
+  cat("=== KEGG Pathways ===\n")
+  if (!is.null(kegg) && nrow(kegg) > 0) {
+    cat("Significant pathways:", nrow(kegg), "\n")
+    print(head(kegg@result[, c("Description", "GeneRatio", "pvalue", "p.adjust", "geneID")], 10))
+  } else {
+    cat("No significant pathways found\n")
+  }
+  
+} else {
+  kegg <- NULL
+}
+```
+
+```{r kegg-plot, fig.width=10, fig.height=6}
+if (!is.null(kegg) && nrow(kegg) > 0) {
+  p2 <- dotplot(kegg, showCategory = 15, title = "KEGG Pathways")
+  print(p2)
+}
+```
+
+---
+
+# 7. Reactome Pathway Enrichment
+
+```{r reactome-enrichment}
+# =============================================================================
+# PURPOSE: Reactome pathway enrichment
+#
+# Reactome: Peer-reviewed, highly curated pathway database
+# Good for signaling cascades and detailed mechanistic pathways
+# =============================================================================
+
+if(exists("entrez_ids") && nrow(entrez_ids) >= 3) {
+  
+  reactome <- enrichPathway(gene = entrez_ids$ENTREZID,
+                            organism = "human",
+                            pAdjustMethod = "BH",
+                            pvalueCutoff = 0.05,
+                            qvalueCutoff = 0.2,
+                            readable = TRUE)
+  
+  cat("=== Reactome Pathways ===\n")
+  if (!is.null(reactome) && nrow(reactome) > 0) {
+    cat("Significant pathways:", nrow(reactome), "\n")
+    print(head(reactome@result[, c("Description", "GeneRatio", "pvalue", "p.adjust", "geneID")], 10))
+  } else {
+    cat("No significant pathways found\n")
+  }
+  
+} else {
+  reactome <- NULL
+}
+```
+
+```{r reactome-plot, fig.width=10, fig.height=6}
+if (!is.null(reactome) && nrow(reactome) > 0) {
+  p3 <- dotplot(reactome, showCategory = 15, title = "Reactome Pathways")
+  print(p3)
+}
+```
+
+---
+
+# 8. MSigDB Hallmark Gene Sets
+
+```{r hallmark}
+# =============================================================================
+# PURPOSE: Test enrichment against MSigDB Hallmark gene sets
+#
+# HALLMARK: 50 well-defined biological states/processes
+# Examples: Inflammatory response, EMT, Hypoxia, TGF-beta signaling
+# Very useful for high-level biological interpretation
+# =============================================================================
+
+if(exists("entrez_ids") && nrow(entrez_ids) >= 3) {
+  
+  # Get Hallmark gene sets
+  hallmark <- msigdbr(species = "Homo sapiens", category = "H") %>%
+    dplyr::select(gs_name, entrez_gene)
+  
+  # Run enrichment
+  hallmark_enrich <- enricher(gene = entrez_ids$ENTREZID,
+                              TERM2GENE = hallmark,
+                              pAdjustMethod = "BH",
+                              pvalueCutoff = 0.05,
+                              qvalueCutoff = 0.2)
+  
+  cat("=== MSigDB Hallmark ===\n")
+  if (!is.null(hallmark_enrich) && nrow(hallmark_enrich) > 0) {
+    cat("Significant gene sets:", nrow(hallmark_enrich), "\n")
+    print(head(hallmark_enrich@result[, c("ID", "GeneRatio", "pvalue", "p.adjust")], 10))
+  } else {
+    cat("No significant gene sets found\n")
+  }
+  
+} else {
+  hallmark_enrich <- NULL
+}
+```
+
+```{r hallmark-plot, fig.width=10, fig.height=6}
+if (!is.null(hallmark_enrich) && nrow(hallmark_enrich) > 0) {
+  p4 <- dotplot(hallmark_enrich, showCategory = 15, title = "MSigDB Hallmark Gene Sets")
+  print(p4)
+}
+```
+
+---
+
+# 9. Gene Set Enrichment Analysis (GSEA)
+
+```{r gsea-prep}
+# =============================================================================
+# PURPOSE: GSEA uses ALL proteins ranked by fold change
+#
+# WHY GSEA vs ORA:
+# - ORA: Uses only "significant" hits (information loss)
+# - GSEA: Uses full ranked list (more sensitive, no threshold needed)
+#
+# RANKING: We use the t-statistic (accounts for effect size and variance)
+# - Positive t = higher in ILD onset
+# - Negative t = lower in ILD onset
+# =============================================================================
+
+# Create ranked gene list
+# Merge results with Entrez IDs
+results_entrez <- results_detected %>%
+  inner_join(all_entrez, by = c("Assay" = "SYMBOL"))
+
+# Create named vector: names = Entrez IDs, values = ranking metric
+# Using t-statistic
+gene_list <- results_entrez$t
+names(gene_list) <- results_entrez$ENTREZID
+
+# Sort by decreasing value (most positive = most elevated in ILD onset)
+gene_list <- sort(gene_list, decreasing = TRUE)
+
+cat("GSEA gene list:", length(gene_list), "genes\n")
+cat("Range:", round(min(gene_list), 2), "to", round(max(gene_list), 2), "\n")
+```
+
+```{r gsea-go}
+# GSEA with GO Biological Process
+gsea_go <- gseGO(geneList = gene_list,
+                 OrgDb = org.Hs.eg.db,
+                 ont = "BP",
+                 minGSSize = 10,
+                 maxGSSize = 500,
+                 pvalueCutoff = 0.05,
+                 verbose = FALSE)
+
+cat("=== GSEA: GO Biological Process ===\n")
+if (!is.null(gsea_go) && nrow(gsea_go) > 0) {
+  cat("Significant terms:", nrow(gsea_go), "\n")
+  # Positive NES = enriched in ILD onset; Negative NES = depleted in ILD onset
+  print(head(gsea_go@result[, c("Description", "NES", "pvalue", "p.adjust")], 10))
+} else {
+  cat("No significant terms found\n")
+}
+```
+
+```{r gsea-hallmark}
+# Get Hallmark gene sets if not already loaded
+if(!exists("hallmark")) {
+  hallmark <- msigdbr(species = "Homo sapiens", category = "H") %>%
+    dplyr::select(gs_name, entrez_gene)
+}
+
+# GSEA with Hallmark
+gsea_hallmark <- GSEA(geneList = gene_list,
+                      TERM2GENE = hallmark,
+                      minGSSize = 10,
+                      maxGSSize = 500,
+                      pvalueCutoff = 0.05,
+                      verbose = FALSE)
+
+cat("\n=== GSEA: Hallmark ===\n")
+if (!is.null(gsea_hallmark) && nrow(gsea_hallmark) > 0) {
+  cat("Significant gene sets:", nrow(gsea_hallmark), "\n")
+  # Positive NES = enriched in ILD onset; Negative NES = depleted
+  print(head(gsea_hallmark@result[, c("ID", "NES", "pvalue", "p.adjust")], 10))
+} else {
+  cat("No significant gene sets found\n")
+}
+```
+
+```{r gsea-plot, fig.width=10, fig.height=6}
+if (!is.null(gsea_hallmark) && nrow(gsea_hallmark) > 0) {
+  # Ridge plot shows distribution of genes in each pathway
+  p5 <- ridgeplot(gsea_hallmark, showCategory = 15) + 
+    labs(title = "GSEA: Hallmark Gene Sets",
+         subtitle = "Positive NES = enriched in ILD onset")
+  print(p5)
+}
+```
+
+---
+
+# 10. Summary Table
+
+```{r summary}
+# =============================================================================
+# PURPOSE: Combine all enrichment results into one summary
+# =============================================================================
+
+# Function to extract top results
+extract_top <- function(result, source, n = 5) {
+  if (is.null(result) || nrow(result) == 0) return(NULL)
+  result@result %>%
+    head(n) %>%
+    mutate(Source = source) %>%
+    dplyr::select(Source, ID, Description, pvalue, p.adjust)
+}
+
+# Combine results
+summary_table <- bind_rows(
+  extract_top(go_bp, "GO_BP"),
+  extract_top(go_mf, "GO_MF"),
+  extract_top(kegg, "KEGG"),
+  extract_top(reactome, "Reactome"),
+  extract_top(hallmark_enrich, "Hallmark")
+)
+
+summary_table
+```
+
+---
+
+# 11. Export Results
+
+```{r export}
+# =============================================================================
+# PURPOSE: Save results for downstream analysis and reporting
+# =============================================================================
+
+output_dir <- "enrichment_results_ILD"
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+# ORA results
+if (!is.null(go_bp) && nrow(go_bp) > 0) {
+  write.csv(go_bp@result, file.path(output_dir, "ORA_GO_BP.csv"), row.names = FALSE)
+}
+if (!is.null(go_mf) && nrow(go_mf) > 0) {
+  write.csv(go_mf@result, file.path(output_dir, "ORA_GO_MF.csv"), row.names = FALSE)
+}
+if (!is.null(go_cc) && nrow(go_cc) > 0) {
+  write.csv(go_cc@result, file.path(output_dir, "ORA_GO_CC.csv"), row.names = FALSE)
+}
+if (!is.null(kegg) && nrow(kegg) > 0) {
+  write.csv(kegg@result, file.path(output_dir, "ORA_KEGG.csv"), row.names = FALSE)
+}
+if (!is.null(reactome) && nrow(reactome) > 0) {
+  write.csv(reactome@result, file.path(output_dir, "ORA_Reactome.csv"), row.names = FALSE)
+}
+if (!is.null(hallmark_enrich) && nrow(hallmark_enrich) > 0) {
+  write.csv(hallmark_enrich@result, file.path(output_dir, "ORA_Hallmark.csv"), row.names = FALSE)
+}
+
+# Direction-specific ORA
+if (exists("go_bp_up") && !is.null(go_bp_up) && nrow(go_bp_up) > 0) {
+  write.csv(go_bp_up@result, file.path(output_dir, "ORA_GO_BP_UpInILD.csv"), row.names = FALSE)
+}
+if (exists("go_bp_down") && !is.null(go_bp_down) && nrow(go_bp_down) > 0) {
+  write.csv(go_bp_down@result, file.path(output_dir, "ORA_GO_BP_DownInILD.csv"), row.names = FALSE)
+}
+
+# GSEA results
+if (!is.null(gsea_go) && nrow(gsea_go) > 0) {
+  write.csv(gsea_go@result, file.path(output_dir, "GSEA_GO_BP.csv"), row.names = FALSE)
+}
+if (!is.null(gsea_hallmark) && nrow(gsea_hallmark) > 0) {
+  write.csv(gsea_hallmark@result, file.path(output_dir, "GSEA_Hallmark.csv"), row.names = FALSE)
+}
+
+# Hit lists
+write.csv(hits_fdr, file.path(output_dir, "protein_hits_FDR02.csv"), row.names = FALSE)
+write.csv(hits_up, file.path(output_dir, "protein_hits_UpInILD.csv"), row.names = FALSE)
+write.csv(hits_down, file.path(output_dir, "protein_hits_DownInILD.csv"), row.names = FALSE)
+
+cat("Results exported to:", output_dir, "\n")
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

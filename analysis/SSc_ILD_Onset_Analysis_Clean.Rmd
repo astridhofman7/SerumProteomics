@@ -1,0 +1,594 @@
+---
+title: "SSc-ILD Onset: Identification of Deregulated Proteins"
+author: "Analysis Script"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Overview
+
+This analysis identifies serum proteins associated with ILD onset in SSc patients.
+
+**Analytical approach:**
+
+| Analysis | Comparison | Description |
+|----------|------------|-------------|
+| Binary | ILD onset vs No ILD onset | Identifies proteins differentially expressed between groups |
+
+**Covariates:**
+
+- `entrytime` (year of study entry): Included to adjust for potential batch effects
+
+---
+
+# 1. Libraries
+
+```{r libraries}
+# =============================================================================
+# PURPOSE: Load required R packages
+#
+# Data I/O:
+#   - arrow: Read parquet files (Olink output format)
+#   - readxl: Read Excel metadata
+#   - here: Relative file paths for reproducibility
+#
+# Data manipulation:
+#   - dplyr: Data wrangling (filter, mutate, select, etc.)
+#   - tidyr: Reshaping data (long <-> wide format)
+#   - tibble: For rownames_to_column conversion
+#
+# Statistical analysis:
+#   - limma: Linear models for differential expression
+#            Designed for microarray/proteomics; handles small samples well
+#            Uses empirical Bayes to borrow information across proteins
+#
+# Visualization:
+#   - ggplot2: General plotting
+#   - EnhancedVolcano: Publication-quality volcano plots
+#   - enrichR: Pathway enrichment analysis
+# =============================================================================
+
+library(arrow)
+library(readxl)
+library(here)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(limma)
+library(ggplot2)
+library(EnhancedVolcano)
+library(enrichR)
+```
+
+---
+
+# 2. Data Loading
+
+```{r load-data}
+# =============================================================================
+# PURPOSE: Load raw data files
+#
+# Two data sources:
+# 1. NPX data: Olink's Normalized Protein eXpression values (log2 scale)
+#    - Already normalized across plates by Olink
+#    - Long format: one row per protein-sample combination
+#
+# 2. Metadata: Clinical data including ILD onset status
+# =============================================================================
+
+# UPDATE THESE PATHS to your local files
+olink <- read_parquet(here::here("data", "P2024-199-OLI_80_NPX_2024-10-10.parquet"))
+metadata <- read_excel(here::here("data", "ASTRID_ILDonset_PROTEOMIC_COSIMO.xlsx"), sheet = 1)
+
+cat("Olink data:", nrow(olink), "rows\n")
+cat("Metadata:", nrow(metadata), "samples\n")
+```
+
+---
+
+# 3. Data Preparation
+
+```{r prepare-data}
+# =============================================================================
+# PURPOSE: Merge proteomics data with clinical metadata
+#
+# WHY: NPX data contains only sample IDs and protein values.
+#      We need to link these to clinical outcomes (ILD onset)
+#      to test which proteins associate with disease progression.
+#
+# KEY STEPS:
+# 1. Create matching ID columns for merge
+# 2. Remove unnecessary columns that cause issues
+# 3. Merge NPX with metadata
+# 4. Filter to samples with clinical data
+# =============================================================================
+
+# Remove columns that are not needed and may cause issues
+metadata$`Id Visit V2018` <- NULL
+
+# Create matching ID columns
+# WHY: Olink uses "SampleID", metadata uses "Barcode" — same values, different names
+metadata$patient <- metadata$Barcode
+olink$patient <- olink$SampleID
+
+# Merge NPX with metadata
+merged <- merge(olink, metadata, by = "patient", all = TRUE)
+
+# Keep only samples with clinical data (DPS = disease status) OR plate controls
+# WHY: Plate controls (CTRL samples) are needed for QC but have no clinical data
+#      Samples without DPS cannot be used in the analysis
+filtered_df <- merged %>%
+  filter(!is.na(DPS) | grepl("CTRL", SampleID))
+
+cat("Merged data:", nrow(merged), "rows\n")
+cat("Filtered data:", nrow(filtered_df), "rows\n")
+```
+
+```{r prepare-metadata}
+# =============================================================================
+# PURPOSE: Prepare clinical metadata for statistical modeling
+#
+# KEY STEPS:
+# 1. Create ILD status variable from numeric indicator
+# 2. Convert categorical variables to factors
+# 3. Handle entry time (for batch effect adjustment)
+# =============================================================================
+
+# Create readable ILD status variable
+# WHY: ILDonset_1yes0no is numeric (1/0); we need a factor for modeling
+metadata$ild_status <- ifelse(metadata$ILDonset_1yes0no == 1, "ILDonset", "NoILDonset")
+
+# Factor categorical variables for limma
+# WHY: limma uses factor levels to define contrasts
+metadata$ILDonset_1yes0no <- factor(metadata$ILDonset_1yes0no)
+metadata$DPS <- factor(metadata$DPS)
+
+# Extract entry year for batch effect adjustment
+# WHY: Year of sample collection may introduce batch effects
+#      (different reagent lots, operators, storage times)
+metadata$entrytime <- substr(metadata$Eingangsdt., 1, 4)
+metadata$entrytime <- factor(metadata$entrytime)
+
+cat("ILD status distribution:\n")
+print(table(metadata$ild_status))
+cat("\nEntry year distribution:\n")
+print(table(metadata$entrytime))
+```
+
+---
+
+# 4. Expression Matrix Creation
+
+```{r create-matrix}
+# =============================================================================
+# PURPOSE: Reshape NPX data from long to wide format for limma
+#
+# WHY: Olink outputs data in "long" format (one row per protein-sample)
+#      limma requires a matrix: rows = proteins, columns = samples
+#      This is the standard format for differential expression analysis
+# =============================================================================
+
+# Extract the three columns we need
+matrix_df <- as.data.frame(cbind(
+  filtered_df$patient, 
+  filtered_df$NPX, 
+  filtered_df$OlinkID
+))
+colnames(matrix_df) <- c("Patient", "Value", "Protein")
+
+# Reshape: long → wide (proteins as rows, patients as columns)
+wide_data <- tidyr::pivot_wider(matrix_df, names_from = Patient, values_from = Value)
+wide_data <- as.data.frame(wide_data)
+
+# Set protein IDs as rownames (limma convention)
+rownames(wide_data) <- wide_data$Protein
+
+# Remove non-sample columns (Protein column, plate controls, NA columns)
+# WHY: We only want patient samples in the expression matrix
+cols_to_remove <- c("Protein")
+# Also identify plate control columns (contain "CTRL" or are NA)
+ctrl_cols <- grep("CTRL|CONTROL", colnames(wide_data), value = TRUE)
+na_cols <- colnames(wide_data)[colnames(wide_data) == "NA"]
+cols_to_remove <- c(cols_to_remove, ctrl_cols, na_cols)
+
+data <- wide_data[, !(colnames(wide_data) %in% cols_to_remove), drop = FALSE]
+
+# Convert to numeric matrix
+# WHY: pivot_wider creates character columns; limma needs numeric
+data_matrix <- as.matrix(data)
+data_matrix2 <- apply(data_matrix, 2, as.numeric)
+rownames(data_matrix2) <- rownames(data_matrix)
+
+cat("Expression matrix:", nrow(data_matrix2), "proteins x", ncol(data_matrix2), "samples\n")
+```
+
+---
+
+# 5. Sample Alignment (CRITICAL)
+
+```{r align-samples}
+# =============================================================================
+# PURPOSE: Ensure expression matrix columns match metadata rows
+#
+# WHY THIS IS CRITICAL:
+# limma assumes row i of the design matrix corresponds to column i of the 
+# expression matrix. If these are misaligned, you're testing the wrong 
+# samples against the wrong clinical outcomes — results will be meaningless.
+#
+# This is the #1 source of errors in differential expression analysis!
+# =============================================================================
+
+# First, filter metadata to only include samples in the expression matrix
+metadata_aligned <- metadata %>%
+  filter(Barcode %in% colnames(data_matrix2))
+
+# Check alignment BEFORE fixing
+cat("BEFORE alignment:\n")
+cat("Matrix columns (first 5):", head(colnames(data_matrix2), 5), "\n")
+cat("Metadata Barcode (first 5):", head(metadata_aligned$Barcode, 5), "\n")
+cat("Aligned:", identical(colnames(data_matrix2), metadata_aligned$Barcode), "\n\n")
+
+# Reorder BOTH to ensure alignment
+# Method: Sort both by the same ID
+data_matrix2 <- data_matrix2[, order(colnames(data_matrix2))]
+metadata_aligned <- metadata_aligned[order(metadata_aligned$Barcode), ]
+
+# Verify alignment AFTER fixing
+cat("AFTER alignment:\n")
+cat("Matrix columns (first 5):", head(colnames(data_matrix2), 5), "\n")
+cat("Metadata Barcode (first 5):", head(metadata_aligned$Barcode, 5), "\n")
+cat("Aligned:", identical(colnames(data_matrix2), metadata_aligned$Barcode), "\n")
+
+# STOP if not aligned — do not proceed with wrong results
+stopifnot("Sample alignment failed!" = identical(colnames(data_matrix2), metadata_aligned$Barcode))
+cat("\n✓ Alignment verified\n")
+```
+
+---
+  
+# 6. Binary Analysis: ILD Onset vs No ILD Onset
+
+```{r binary-analysis}
+# =============================================================================
+# PURPOSE: Test each protein for differential expression between groups
+#
+# WHY LIMMA:
+# - Designed for small sample sizes (borrows strength across proteins)
+# - Empirical Bayes shrinkage stabilizes variance estimates
+# - Well-validated for proteomics data
+#
+# MODEL: ~0 + ild_status + entrytime
+# - "~0 + ild_status": Estimate mean for each group separately (no intercept)
+#   This makes contrast specification cleaner
+# - "+ entrytime": Adjust for year of entry (batch effect)
+#
+# CONTRAST: ILDonset - NoILDonset
+# - Positive logFC = higher in ILD onset patients
+# - Negative logFC = lower in ILD onset patients (higher in controls)
+# =============================================================================
+
+# Set factor with reference level
+# WHY: "NoILDonset" first means positive logFC = higher in ILDonset
+metadata_aligned$ild_status <- factor(metadata_aligned$ild_status, 
+                                       levels = c("NoILDonset", "ILDonset"))
+
+# Create design matrix
+design <- model.matrix(~0 + ild_status + entrytime, data = metadata_aligned)
+
+# Clean column names (remove "ild_status" prefix for readability)
+colnames(design) <- gsub("ild_status", "", colnames(design))
+
+cat("Design matrix:\n")
+print(head(design))
+cat("\nSamples per group:\n")
+print(table(metadata_aligned$ild_status))
+
+# Fit linear model
+fit <- lmFit(data_matrix2, design)
+
+# Define contrast: ILD onset vs No ILD onset
+contrast_matrix <- makeContrasts(
+  ILDonset_vs_NoILDonset = ILDonset - NoILDonset,
+  levels = design
+)
+
+# Apply contrast and empirical Bayes moderation
+# WHY eBayes: Shrinks variance estimates toward a common value
+#             This stabilizes results when sample size is small
+fit2 <- contrasts.fit(fit, contrast_matrix)
+fit2 <- eBayes(fit2)
+
+# Extract results
+results <- topTable(fit2, coef = "ILDonset_vs_NoILDonset", number = Inf, adjust.method = "BH")
+
+cat("\nTop 10 proteins:\n")
+print(head(results, 10))
+```
+
+---
+
+# 7. Expression Filtering & FDR Recalculation
+
+```{r filter-results}
+# =============================================================================
+# PURPOSE: Filter for reliably detected proteins and recalculate FDR
+#
+# WHY FILTER ON AveExpr:
+# - Proteins with very low expression (AveExpr < 0) are near detection limit
+# - These have high noise and low statistical power
+# - Removing them reduces multiple testing burden
+#
+# WHY RECALCULATE FDR:
+# - Original adj.P.Val was calculated on ALL proteins
+# - After filtering, we have fewer tests
+# - Recalculating gives appropriate FDR for the filtered set
+# - This is valid because AveExpr is INDEPENDENT of the test statistic
+#   (it's mean expression across ALL samples, not related to group difference)
+# =============================================================================
+
+results <- results %>%
+  rownames_to_column(var = "OlinkID")
+
+# Filter for reliably detected proteins and recalculate FDR
+results_filtered <- results %>%
+  filter(AveExpr > 0) %>%
+  mutate(adj.P.Val = p.adjust(P.Value, method = "BH"))
+
+cat("Before filtering:", nrow(results), "proteins\n")
+cat("After AveExpr > 0:", nrow(results_filtered), "proteins\n")
+
+# Apply significance threshold
+hits <- results_filtered %>%
+  filter(adj.P.Val < 0.2) %>%
+  arrange(P.Value)
+
+cat("Significant hits (FDR < 0.2):", nrow(hits), "\n")
+```
+
+---
+
+# 8. Add Gene Names
+
+```{r add-gene-names}
+# =============================================================================
+# PURPOSE: Map Olink IDs to gene symbols for interpretability
+#
+# WHY: Olink IDs (e.g., "OID45450") are internal identifiers
+#      Gene symbols (e.g., "MMP1") are more meaningful for biology
+# =============================================================================
+
+# Create lookup table from original data
+gene_lookup <- filtered_df %>%
+  distinct(OlinkID, Assay) %>%
+  filter(!is.na(OlinkID))
+
+# Add gene names to results
+results_filtered <- results_filtered %>%
+  left_join(gene_lookup, by = "OlinkID")
+
+hits <- hits %>%
+  left_join(gene_lookup, by = "OlinkID")
+
+cat("Top hits with gene names:\n")
+print(hits %>% dplyr::select(Assay, logFC, P.Value, adj.P.Val) %>% head(15))
+```
+
+---
+
+# 9. Direction of Change Summary
+
+```{r direction-summary}
+# =============================================================================
+# PURPOSE: Summarize which proteins are up/down in ILD onset
+#
+# INTERPRETATION:
+# - Positive logFC: Higher in ILD onset patients
+# - Negative logFC: Lower in ILD onset patients (higher in controls)
+# =============================================================================
+
+hits_up <- hits %>% filter(logFC > 0)
+hits_down <- hits %>% filter(logFC < 0)
+
+cat("=== Direction of Change (FDR < 0.2) ===\n\n")
+cat("Higher in ILD onset:", nrow(hits_up), "\n")
+if(nrow(hits_up) > 0) cat("  ", paste(hits_up$Assay, collapse = ", "), "\n\n")
+
+cat("Lower in ILD onset:", nrow(hits_down), "\n")
+if(nrow(hits_down) > 0) cat("  ", paste(hits_down$Assay, collapse = ", "), "\n")
+```
+
+---
+
+# 10. Volcano Plot
+
+```{r volcano-plot, fig.width=10, fig.height=10}
+# =============================================================================
+# PURPOSE: Visualize effect sizes and significance for all proteins
+#
+# X-axis: logFC (effect size)
+#   - Positive = higher in ILD onset
+#   - Negative = lower in ILD onset
+#
+# Y-axis: -log10(P.Value)
+#   - Higher = more significant
+#   - Note: Using nominal P.Value for visualization; FDR for hit selection
+# =============================================================================
+
+volcano <- EnhancedVolcano(
+  results_filtered,
+  lab = results_filtered$Assay,
+  x = 'logFC',
+  y = 'P.Value',
+  pCutoff = 0.05,
+  FCcutoff = 0.5,
+  labSize = 3,
+  drawConnectors = TRUE,
+  widthConnectors = 0.5,
+  title = "ILD Onset vs No ILD Onset",
+  subtitle = "Positive logFC = higher in ILD onset patients"
+)
+
+print(volcano)
+```
+
+---
+
+# 11. Boxplots for Significant Proteins
+
+```{r boxplots, fig.width=12, fig.height=12}
+# =============================================================================
+# PURPOSE: Visualize expression of significant proteins
+#
+# WHY BOXPLOTS:
+# - Show distribution in each group
+# - Easy to interpret for non-statisticians
+# - Wilcoxon p-value shown for binary comparison (different from limma)
+#
+# NOTE: Proteins were selected using limma (adjusts for entrytime);
+#       Wilcoxon shown here is unadjusted binary comparison
+# =============================================================================
+
+# Prepare data for plotting (need long format with patient info)
+plot_data <- filtered_df %>%
+  filter(patient %in% metadata_aligned$Barcode) %>%
+  left_join(metadata_aligned %>% dplyr::select(Barcode, ild_status), 
+            by = c("patient" = "Barcode"))
+
+# Function to plot one protein
+plot_protein <- function(protein_id, gene_name, fdr_val) {
+  
+  df <- plot_data %>% filter(OlinkID == protein_id)
+  
+  ggplot(df, aes(x = ild_status, y = NPX, fill = ild_status)) +
+    geom_boxplot(width = 0.5, alpha = 0.8, outlier.shape = NA) +
+    geom_jitter(width = 0.15, alpha = 0.6, size = 2) +
+    scale_fill_manual(values = c("NoILDonset" = "#48639C", "ILDonset" = "#AF3B6E")) +
+    stat_compare_means(method = "wilcox.test", label.x.npc = 0.5, label.y.npc = 0.95) +
+    labs(
+      title = gene_name,
+      subtitle = paste0("FDR = ", signif(fdr_val, 2)),
+      x = NULL,
+      y = "NPX"
+    ) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+      plot.subtitle = element_text(hjust = 0.5, size = 10, color = "gray40")
+    )
+}
+
+# Plot top hits (up to 12)
+if(nrow(hits) > 0) {
+  library(cowplot)
+  library(ggpubr)
+  
+  n_plots <- min(nrow(hits), 12)
+  plot_list <- list()
+  
+  for(i in 1:n_plots) {
+    plot_list[[i]] <- plot_protein(
+      hits$OlinkID[i], 
+      hits$Assay[i], 
+      hits$adj.P.Val[i]
+    )
+  }
+  
+  combined <- plot_grid(plotlist = plot_list, ncol = 4)
+  print(combined)
+}
+```
+
+---
+
+# 12. Pathway Enrichment
+
+```{r enrichment, fig.width=10, fig.height=8}
+# =============================================================================
+# PURPOSE: Identify biological pathways enriched in significant proteins
+#
+# METHOD: Over-representation analysis (ORA) using Enrichr
+#
+# DATABASES:
+# - GO Biological Process: Cellular processes
+# - GO Molecular Function: Biochemical activities
+# - GO Cellular Component: Subcellular localization
+#
+# NOTE: With small protein lists, enrichment may not reach significance
+#       This is normal for targeted panels (vs whole proteome)
+# =============================================================================
+
+if(nrow(hits) >= 3) {
+  
+  proteins <- hits$Assay
+  
+  dbs <- c("GO_Biological_Process_2023", 
+           "GO_Molecular_Function_2023", 
+           "GO_Cellular_Component_2023")
+  
+  enriched <- enrichr(proteins, dbs)
+  
+  # Show top GO Biological Process results
+  bp_results <- enriched[["GO_Biological_Process_2023"]]
+  
+  if(nrow(bp_results) > 0 && any(bp_results$Adjusted.P.value < 0.1)) {
+    plotEnrich(bp_results, 
+               showTerms = 15, 
+               numChar = 60, 
+               y = "Count", 
+               orderBy = "Adjusted.P.value", 
+               title = "GO Biological Process Enrichment")
+  } else {
+    cat("No significant GO enrichment found (FDR < 0.1)\n")
+    cat("This is common with small, targeted protein panels.\n")
+    cat("\nTop terms (may not be significant):\n")
+    print(head(bp_results[, c("Term", "Overlap", "Adjusted.P.value")], 10))
+  }
+  
+} else {
+  cat("Too few hits for enrichment analysis (need at least 3 proteins)\n")
+}
+```
+
+---
+
+# 13. Export Results
+
+```{r export}
+# =============================================================================
+# PURPOSE: Save results for downstream analysis and reporting
+# =============================================================================
+
+output_dir <- here::here("output", "ILD_Onset_Analysis")
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+# Full results (all proteins)
+write.csv(results_filtered, 
+          file.path(output_dir, "results_ILDonset_vs_NoILDonset_all.csv"), 
+          row.names = FALSE)
+
+# Significant hits only
+write.csv(hits, 
+          file.path(output_dir, "results_ILDonset_vs_NoILDonset_FDR02.csv"), 
+          row.names = FALSE)
+
+cat("Results exported to:", output_dir, "\n")
+cat("Files:\n")
+cat("  - results_ILDonset_vs_NoILDonset_all.csv (all proteins)\n")
+cat("  - results_ILDonset_vs_NoILDonset_FDR02.csv (FDR < 0.2 hits)\n")
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

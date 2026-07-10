@@ -19,3 +19,7 @@ editor_options:
 
 1. [Analysis Types: Binary vs. Continuous](RESOLVE_SSc_Skin_Regression_Analysis.html)
 2. [Pathway Enrichment Analysis (Analysis D)](RESOLVE_AnalysisD_PathwayEnrichment.html)
+
+###ILD Onset
+1. [Identification of Deregulated Proteins](SSc_ILD_Onset_Analysis_Clean.html)
+2. [Pathway Enrichment Analysis](SSc_ILD_Onset_Pathway_Enrichment.html)
