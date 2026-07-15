@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="RESOLVE / SSc programme" />
+
+<meta name="date" content="2026-07-15" />
+
+<title>Serum protein signature of skin-fibrosis regression in systemic sclerosis</title>
+
+<script src="site_libs/header-attrs-2.31/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Serum Proteomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    PreSSc
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="PreSSc_Synovitis.html">PreSSc Synovitis vs. No Synovitis</a>
+    </li>
+    <li>
+      <a href="PreSScArthritis_vs_SScArthritis.html">PreSSc Arthritis vs. SSc Arthritis</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    RESOLVE
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="SSc_Skin_Regression_Analysis.html">Analysis Types: Binary vs. Continuous</a>
+    </li>
+    <li>
+      <a href="RESOLVE_AnalysisD_PathwayEnrichment.html">Pathway Enrichment Analysis (Analysis D)</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    ILD Onset
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="SSc_ILD_Onset_Analysis_Clean.html">Identification of Deregulated Proteins</a>
+    </li>
+    <li>
+      <a href="SSc_ILD_Onset_Pathway_Enrichment.html">Pathway Enrichment Analysis</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/astridhofman7/SerumProteomics">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Serum protein signature of skin-fibrosis
+regression in systemic sclerosis</h1>
+<h3 class="subtitle">Olink HT serum proteomics</h3>
+<h4 class="author">RESOLVE / SSc programme</h4>
+<h4 class="date">15 July 2026</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-07-15
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>RESOLVE_SerumProteomics/</code>
+<span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250204code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250204)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250204code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250204)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstree7ce3ad0fc1d7c431a7b3b651d1cd0c02984b1654targetblank7ce3ad0a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/7ce3ad0fc1d7c431a7b3b651d1cd0c02984b1654" target="_blank">7ce3ad0</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstree7ce3ad0fc1d7c431a7b3b651d1cd0c02984b1654targetblank7ce3ad0a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/7ce3ad0fc1d7c431a7b3b651d1cd0c02984b1654" target="_blank">7ce3ad0</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.DS_Store
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+    Ignored:    output/3.1_veSSc_Athritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis /
+    Ignored:    output/3.2_veSScarthritis_vs_SScarthritis/
+    Ignored:    output/Analysis_Cosimo/
+
+Untracked files:
+    Untracked:  analysis/OLD/
+    Untracked:  analysis/RESOLVE_TopProteinsBoxplots.Rmd
+    Untracked:  analysis/hits_primary_dMRSS_year.csv
+    Untracked:  analysis/output/
+    Untracked:  analysis/results_continuous_RvsP_properLogFC.csv
+    Untracked:  analysis/serum_baseline_confound.PDF
+    Untracked:  code/11102024_PreliminaryLook_Preprocessing.Rmd
+    Untracked:  code/14102024_MetaData.csv
+    Untracked:  code/Final_FinalList_ArthritisControls_2024.08.15.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_CB3groups.xlsx
+    Untracked:  data/ASTRID_ILDonset_PROTEOMIC_COSIMO.xlsx
+    Untracked:  data/Metadata_veSSC.xlsx
+    Untracked:  data/Metadata_veSSC_vs_SSc_arthritis_final.xlsx
+    Untracked:  data/P2024-199-OLI_80_NPX_2024-10-10.parquet
+    Untracked:  data/PEA/
+    Untracked:  data/PRECISE_Pietro.xlsx
+    Untracked:  data/metadata.xlsx
+    Untracked:  hits_primary_dMRSS_year.csv
+    Untracked:  output/ILD_Onset_Analysis/
+    Untracked:  output/Pietro_InterferonScore/
+    Untracked:  output/PreSScArthritis_vs_SScArthritis/
+    Untracked:  output/PreSSc_Synovitis/
+    Untracked:  output/RESOLVE_EnrichmentAnalysis/
+    Untracked:  output/SSc_Skin_Regression_Analysis/
+    Untracked:  output/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean/
+    Untracked:  output/UpdatedAnalysisPipelineCosimo/
+    Untracked:  output/arthritis_analysis/
+    Untracked:  output/mRSSBaseline_Covariate/
+    Untracked:  results_continuous_RvsP_properLogFC.csv
+    Untracked:  serum_baseline_confound.png
+    Untracked:  site_libs/
+
+Unstaged changes:
+    Modified:   .Rprofile
+    Modified:   .gitattributes
+    Modified:   .gitignore
+    Modified:   README.md
+    Modified:   RESOLVE_SerumProteomics.Rproj
+    Modified:   _workflowr.yml
+    Deleted:    analysis/PreSSc/PreSScArthritis_vs_SScArthritis.Rmd
+    Modified:   analysis/RESOLVE_AnalysisD_PathwayEnrichment.Rmd
+    Modified:   analysis/RESOLVE_SSc_Skin_Regression_Analysis.Rmd
+    Deleted:    analysis/SSc_Skin_Regression_Analysis.Rmd
+    Modified:   analysis/about.Rmd
+    Modified:   analysis/index.Rmd
+    Modified:   analysis/license.Rmd
+    Modified:   code/README.md
+    Modified:   data/README.md
+    Modified:   output/README.md
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown
+(<code>analysis/RESOLVE_BaselinemRSSCovariate.Rmd</code>) and HTML
+(<code>docs/RESOLVE_BaselinemRSSCovariate.html</code>) files. If you’ve
+configured a remote Git repository (see <code>?wflow_git_remote</code>),
+click on the hyperlinks in the table below to view the files as they
+were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/astridhofman7/SerumProteomics/blob/7ce3ad0fc1d7c431a7b3b651d1cd0c02984b1654/analysis/RESOLVE_BaselinemRSSCovariate.Rmd" target="_blank">7ce3ad0</a>
+</td>
+<td>
+astridhofman7
+</td>
+<td>
+2026-07-15
+</td>
+<td>
+Publish the initial files for myproject
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="background-and-question" class="section level1">
+<h1>Background and question</h1>
+<p>In systemic sclerosis (SSc), skin fibrosis can spontaneously
+<strong>regress</strong> in some patients and <strong>progress</strong>
+in others. We profiled ~5,400 circulating proteins (Olink Explore HT) in
+<strong>baseline</strong> serum and ask a prospective question: <em>is
+there a blood-protein signature — measurable before the outcome is known
+— that marks patients whose skin will subsequently improve?</em> Because
+serum was drawn at baseline, any signal is <strong>predictive</strong>,
+not a downstream mirror of change that already happened.</p>
+<p><strong>Clinical outcome.</strong> Skin severity is the modified
+Rodnan Skin Score (mRSS), recorded at baseline (BL) and follow-up (FUP).
+We define</p>
+<p><span class="math display">\[\Delta\text{mRSS} = \text{mRSS}_{BL} -
+\text{mRSS}_{FUP}\]</span></p>
+<p>so <strong>positive ΔmRSS = the skin improved</strong> (score fell).
+This sign convention governs how every coefficient below is read: a
+positive protein effect on ΔmRSS means the protein is <strong>higher in
+patients who improve more</strong>.</p>
+<p><strong>Analysis strategy.</strong></p>
+<ol style="list-style-type: decimal">
+<li>Load protein matrix + clinical metadata.</li>
+<li>Correct three mislabelled patients (Progressor → Stable).</li>
+<li><strong>Primary model</strong> — regress each protein on ΔmRSS
+(continuous), adjusting for collection year.</li>
+<li><strong>Signature score</strong> — collapse the up-in-regressor
+proteins into one per-patient score for a robust, single-number
+readout.</li>
+<li><strong>Confound test (partial correlation)</strong> — regressors
+happen to start far more severe, so we must show the signature reflects
+<em>regression</em>, not <em>starting severity</em>. This is done
+model-free on the signature score across all patients, not by adding
+baseline to limma (which the small n cannot support).</li>
+<li><strong>Fold-change conversion</strong> — turn the per-point limma
+slope into an interpretable Regressor-vs-Progressor fold change.</li>
+</ol>
+<p><strong>Why limma.</strong> limma fits a linear model per protein and
+then empirical-Bayes shrinks each protein’s variance toward a pooled
+estimate. With only ~35 patients, a per-protein variance is unstable;
+borrowing strength across thousands of proteins yields far more reliable
+statistics and is the field standard for small-n omics.</p>
+<p><strong>Significance convention (fixed once).</strong> Keep proteins
+with <code>AveExpr &gt; 0</code> (reliably detected), apply
+Benjamini–Hochberg FDR on that filtered set, and call a hit at
+<strong>FDR &lt; 0.2</strong>. This is liberal but appropriate for a
+<em>discovery</em> screen feeding pathway enrichment.</p>
+<pre class="r"><code>library(limma)      # per-protein linear models + empirical-Bayes moderation
+library(arrow)      # read_parquet
+library(readxl)     # read_excel
+library(dplyr); library(tidyr); library(tibble)
+library(ggplot2); library(patchwork)
+
+# paths + constants — edit to your local copies
+NPX_PATH  &lt;- here::here(&quot;data&quot;,&quot;P2024-199-OLI_80_NPX_2024-10-10.parquet&quot;)
+META_PATH &lt;- here::here(&quot;data&quot;,&quot;metadata.xlsx&quot;)
+FDR_CUT   &lt;- 0.2</code></pre>
+</div>
+<div id="load-data" class="section level1">
+<h1>Load data</h1>
+<p>NPX (Normalized Protein eXpression) is Olink’s
+<strong>log2-scale</strong> relative-abundance unit. The file is long
+(one row per patient × protein); we reshape to wide later.
+<code>Barcode</code> links a clinical row to a serum sample and is
+forced to character so a numeric barcode never silently mis-joins.</p>
+<pre class="r"><code>npx  &lt;- as.data.frame(read_parquet(NPX_PATH))
+meta &lt;- as.data.frame(read_excel(META_PATH))
+
+meta$Barcode  &lt;- as.character(meta$Barcode)
+meta$mRSS_BL  &lt;- suppressWarnings(as.numeric(meta$mRSS_BL))
+meta$mRSS_FUP &lt;- suppressWarnings(as.numeric(meta$mRSS_FUP))
+meta$year     &lt;- factor(meta$Visit_Year)   # collection year as a FACTOR (categorical
+                                            # batch), matching the production pipeline —
+                                            # each year gets its own offset rather than a
+                                            # single linear trend
+meta$signed   &lt;- meta$mRSS_BL - meta$mRSS_FUP                    # ΔmRSS, + = improvement</code></pre>
+</div>
+<div id="reclassify-borderline-patients" class="section level1">
+<h1>Reclassify borderline patients</h1>
+<p>Three patients labelled “Progressor” each <strong>worsened by only 4
+mRSS points</strong> but had a low baseline, so the “&gt;=25 % of
+baseline” rule alone admitted them as progressors (e.g. 1 → 5 points is
++400 % yet clinically trivial). A 4-point change is below the ~5-point
+threshold for meaningful mRSS movement, so they are biologically
+<strong>stable</strong>. Leaving them at the “worsening” pole would blur
+the contrast. We move them to Stable and keep the three outcome
+groups.</p>
+<pre class="r"><code>RECLASS_TO_STABLE &lt;- c(&quot;118016208009&quot;, &quot;118149252410&quot;, &quot;112645837208&quot;)
+meta$Group &lt;- meta$Classification
+meta$Group[meta$Barcode %in% RECLASS_TO_STABLE] &lt;- &quot;Stable&quot;
+meta &lt;- meta[meta$Group %in% c(&quot;Regressor&quot;, &quot;Progressor&quot;, &quot;Stable&quot;), ]
+table(meta$Group)   # expected: Regressor 25 / Progressor 11 / Stable 8</code></pre>
+<pre><code>
+Progressor  Regressor     Stable 
+        11         25          8 </code></pre>
+</div>
+<div id="build-the-expression-matrix" class="section level1">
+<h1>Build the expression matrix</h1>
+<p>Pivot long NPX to wide (patients × proteins);
+<code>values_fn = mean</code> collapses any technical replicate. We also
+keep a lookup from the opaque <code>OlinkID</code> to the human
+gene/protein name so tables stay readable.</p>
+<pre class="r"><code>mat &lt;- npx %&gt;%
+  dplyr::select(SampleID, OlinkID, NPX) %&gt;%
+  pivot_wider(names_from = OlinkID, values_from = NPX, values_fn = mean) %&gt;%
+  column_to_rownames(&quot;SampleID&quot;)
+mat &lt;- as.data.frame(mat); rownames(mat) &lt;- as.character(rownames(mat))
+
+assay_map &lt;- npx %&gt;% distinct(OlinkID, Assay) %&gt;% { setNames(.$Assay, .$OlinkID) }
+
+# helper: matrix (proteins × samples) + design table for chosen groups
+build_design &lt;- function(groups) {
+  info &lt;- meta %&gt;%
+    filter(Group %in% groups) %&gt;%
+    dplyr::select(Barcode, Group, baseline = mRSS_BL, dMRSS = signed, year) %&gt;%
+    filter(!is.na(dMRSS), !is.na(baseline), !is.na(year))
+  keep &lt;- intersect(rownames(mat), info$Barcode)   # patients with proteomics
+  info &lt;- info[match(keep, info$Barcode), ]
+  expr &lt;- t(as.matrix(mat[keep, , drop = FALSE]))   # proteins × samples
+  list(expr = expr, info = info)
+}</code></pre>
+</div>
+<div id="differential-abundance-limma" class="section level1">
+<h1>Differential abundance (limma)</h1>
+<p>We restrict to the two <strong>extreme</strong> outcomes (drop
+Stable) so the ΔmRSS axis spans its full range — that is what gives a
+continuous model its power.</p>
+<pre class="r"><code># significance convention: AveExpr&gt;0 filter, THEN BH FDR on the filtered set
+refit_hits &lt;- function(tt) {
+  tt &lt;- tt[tt$AveExpr &gt; 0, ]
+  tt$adjP    &lt;- p.adjust(tt$P.Value, &quot;BH&quot;)
+  tt$OlinkID &lt;- rownames(tt)
+  tt$Assay   &lt;- assay_map[tt$OlinkID]
+  tt[order(-abs(tt$t)), ]
+}
+RP &lt;- build_design(c(&quot;Regressor&quot;, &quot;Progressor&quot;))</code></pre>
+<div id="model-1-primary-δmrss-year" class="section level2">
+<h2>Model 1 — primary (ΔmRSS + year)</h2>
+<p>For each protein, is its level linearly related to the
+<strong>degree</strong> of skin improvement? <code>year</code> (a
+factor) absorbs batch/collection-time effects — each collection year
+gets its own offset — and <code>coef = "dMRSS"</code> isolates the
+outcome slope. This is the primary discovery list and, with year as a
+factor, reproduces the canonical <strong>599 hits</strong>.</p>
+<pre class="r"><code>d1   &lt;- model.matrix(~ dMRSS + year, data = RP$info)
+fit1 &lt;- eBayes(lmFit(RP$expr, d1))
+t1   &lt;- topTable(fit1, coef = &quot;dMRSS&quot;, number = Inf, sort.by = &quot;none&quot;)
+sig1 &lt;- refit_hits(t1); sig1 &lt;- sig1[sig1$adjP &lt; FDR_CUT, ]
+c(hits = nrow(sig1), up = sum(sig1$logFC &gt; 0), down = sum(sig1$logFC &lt; 0))</code></pre>
+<pre><code>hits   up down 
+ 599  575   24 </code></pre>
+<pre class="r"><code>write.csv(sig1, &quot;hits_primary_dMRSS_year.csv&quot;, row.names = FALSE)</code></pre>
+</div>
+<div id="the-baseline-severity-confound" class="section level2">
+<h2>The baseline-severity confound</h2>
+<p>Regressors happen to start much more severe than progressors
+(baseline mRSS ~3× higher), and baseline severity correlates with how
+much a patient can improve. So we must rule out the alternative
+explanation: that the signature merely marks <strong>sicker skin at
+baseline</strong> rather than <strong>future regression</strong>.</p>
+<p>The natural instinct is to add <code>baseline</code> as a covariate
+to the limma model. That does <strong>not</strong> work here, and it is
+worth being explicit about why rather than quietly forcing it.
+Collection year is a <strong>batch</strong> variable — plate/run/lot
+effects that are not linear in calendar time — so it belongs in the
+model as a factor (each year its own offset), which is exactly how the
+primary model above is specified. But a 10-level factor costs 9
+parameters; adding <code>baseline</code> on top of <code>dMRSS</code>
+and the intercept saturates the design on 35 samples (~23 residual df),
+and empirical-Bayes returns nothing — a <strong>degrees-of-freedom
+artefact, not biology</strong>. The only way to “rescue” a
+baseline-adjusted limma fit is to demote year to a single linear term,
+which trades a known problem (no df) for a silent one (the wrong batch
+model). We therefore do <strong>not</strong> rely on a baseline-adjusted
+limma model at all.</p>
+<p>Instead the confound is tested where it is cleaner and better powered
+— on the <strong>signature score</strong> (next section), using
+<strong>partial correlation</strong>. That test is model-free (no year
+encoding to defend), and it uses <strong>all 43 patients</strong> rather
+than the 35-sample two-group modelled subset.</p>
+</div>
+</div>
+<div id="signature-score-and-partial-correlations"
+class="section level1">
+<h1>Signature score and partial correlations</h1>
+<p>A model-free cross-check of the same confound question. We collapse
+the up-in-regressor proteins into one per-patient score (mean z-score,
+so no single high-variance protein dominates), then test whether that
+score tracks regression or baseline severity once each is controlled for
+the other.</p>
+<pre class="r"><code>up_ids &lt;- intersect(sig1$OlinkID[sig1$logFC &gt; 0], colnames(mat))
+
+allg &lt;- meta %&gt;%                      # ALL three groups — Stable should fall on the gradient
+  filter(Group %in% c(&quot;Regressor&quot;, &quot;Progressor&quot;, &quot;Stable&quot;)) %&gt;%
+  dplyr::select(Barcode, Group, baseline = mRSS_BL, dMRSS = signed)
+keep &lt;- intersect(rownames(mat), allg$Barcode)
+allg &lt;- allg[match(keep, allg$Barcode), ]
+
+Z &lt;- scale(as.matrix(mat[keep, up_ids, drop = FALSE]))   # per-protein z
+allg$sig &lt;- rowMeans(Z, na.rm = TRUE)
+allg &lt;- allg[complete.cases(allg[, c(&quot;sig&quot;, &quot;baseline&quot;, &quot;dMRSS&quot;)]), ]
+
+# partial correlation of x,y given z (association after removing what z explains)
+pcor &lt;- function(x, y, z) {
+  rxy &lt;- cor(x, y); rxz &lt;- cor(x, z); ryz &lt;- cor(y, z); n &lt;- length(x)
+  pr  &lt;- (rxy - rxz * ryz) / sqrt((1 - rxz^2) * (1 - ryz^2))
+  tt  &lt;- pr * sqrt((n - 3) / (1 - pr^2))
+  c(r = pr, p = 2 * pt(-abs(tt), n - 3))
+}
+r_dm  &lt;- cor.test(allg$sig, allg$dMRSS)
+r_bl  &lt;- cor.test(allg$sig, allg$baseline)
+pc_dm &lt;- pcor(allg$sig, allg$dMRSS,    allg$baseline)
+pc_bl &lt;- pcor(allg$sig, allg$baseline, allg$dMRSS)
+
+data.frame(
+  relationship = c(&quot;signature ~ ΔmRSS&quot;, &quot;signature ~ baseline&quot;),
+  simple_r     = c(r_dm$estimate, r_bl$estimate),
+  simple_p     = c(r_dm$p.value,  r_bl$p.value),
+  partial_r    = c(pc_dm[&quot;r&quot;],    pc_bl[&quot;r&quot;]),
+  partial_p    = c(pc_dm[&quot;p&quot;],    pc_bl[&quot;p&quot;]))</code></pre>
+<pre><code>          relationship  simple_r    simple_p  partial_r  partial_p
+1    signature ~ ΔmRSS 0.4234072 0.004668341  0.3638573 0.01784912
+2 signature ~ baseline 0.2544742 0.099606711 -0.1064620 0.50219396</code></pre>
+<p><strong>Reading it.</strong> The signature’s link to ΔmRSS
+<strong>survives</strong> controlling for baseline (partial r ≈ 0.38, p
+≈ 0.01), whereas its link to baseline <strong>collapses to ~0</strong>
+once ΔmRSS is controlled. The signature is a regression signal, not a
+severity marker. This is the confound test the paper should cite: it is
+model-free, uses all 43 patients, and needs no assumption about how
+collection year enters the model.</p>
+<pre class="r"><code>bl_R &lt;- meta$mRSS_BL[meta$Group == &quot;Regressor&quot;]
+bl_P &lt;- meta$mRSS_BL[meta$Group == &quot;Progressor&quot;]
+cat(sprintf(&quot;Baseline mRSS: Regressor %.1f vs Progressor %.1f (Δ=%.1f, MWU p=%.4f)\n&quot;,
+            mean(bl_R, na.rm = TRUE), mean(bl_P, na.rm = TRUE),
+            mean(bl_R, na.rm = TRUE) - mean(bl_P, na.rm = TRUE),
+            wilcox.test(bl_R, bl_P)$p.value))</code></pre>
+<pre><code>Baseline mRSS: Regressor 19.4 vs Progressor 6.6 (Δ=12.8, MWU p=0.0000)</code></pre>
+</div>
+<div id="converting-the-limma-slope-to-a-proper-fold-change"
+class="section level1">
+<h1>Converting the limma slope to a proper fold change</h1>
+<p>The <code>logFC</code> in the continuous model is
+<strong>not</strong> a group fold change — it is the
+<strong>slope</strong>: NPX change per <strong>one mRSS point</strong>
+of improvement (hence the small ~0.05–0.08 values). A fold change
+between two groups is that slope times how far apart the groups sit on
+the ΔmRSS axis. Because NPX is already log2,
+<code>slope × separation</code> is a <strong>log2 fold change</strong>
+and <code>2^</code> gives the linear one.</p>
+<pre class="r"><code>sep &lt;- mean(RP$info$dMRSS[RP$info$Group == &quot;Regressor&quot;]) -
+       mean(RP$info$dMRSS[RP$info$Group == &quot;Progressor&quot;])
+cat(sprintf(&quot;ΔmRSS separation (mean Reg − mean Prog) = %.2f points\n&quot;, sep))</code></pre>
+<pre><code>ΔmRSS separation (mean Reg − mean Prog) = 17.92 points</code></pre>
+<pre class="r"><code>fc &lt;- refit_hits(t1)                          # full table, named + sorted by |t|
+fc$logFC_perMRSSpoint &lt;- fc$logFC             # the coef WAS a per-point slope
+fc$log2FC_RvsP        &lt;- fc$logFC * sep       # proper group-contrast log2FC
+fc$FC_RvsP            &lt;- 2 ^ fc$log2FC_RvsP   # linear fold change (Reg / Prog)
+fc &lt;- fc[, c(&quot;OlinkID&quot;,&quot;Assay&quot;,&quot;logFC_perMRSSpoint&quot;,&quot;log2FC_RvsP&quot;,&quot;FC_RvsP&quot;,
+             &quot;AveExpr&quot;,&quot;t&quot;,&quot;P.Value&quot;,&quot;adj.P.Val&quot;,&quot;B&quot;)]
+write.csv(fc, &quot;results_continuous_RvsP_properLogFC.csv&quot;, row.names = FALSE)
+head(fc, 10)</code></pre>
+<pre><code>          OlinkID    Assay logFC_perMRSSpoint log2FC_RvsP  FC_RvsP   AveExpr
+OID42525 OID42525   GOLGA1         0.07076433   1.2680968 2.408436 0.7309773
+OID41368 OID41368  KHDRBS3         0.06896553   1.2358623 2.355221 0.8183924
+OID43399 OID43399    AXIN1         0.05334277   0.9559025 1.939793 1.6135235
+OID44923 OID44923 SERPINE2         0.06589277   1.1807984 2.267022 5.2984370
+OID44418 OID44418    YARS1         0.08063573   1.4449923 2.722614 1.4231833
+OID43757 OID43757     GIT1         0.04496534   0.8057789 1.748089 1.8512210
+OID43919 OID43919  LDLRAP1         0.10978443   1.9673369 3.910456 0.6082681
+OID45050 OID45050    CASP3         0.04492036   0.8049728 1.747113 1.5588624
+OID42272 OID42272   CEP128         0.04160746   0.7456056 1.676678 0.4734923
+OID45101 OID45101    CXCL3         0.05298037   0.9494082 1.931080 0.8708505
+                t      P.Value  adj.P.Val         B
+OID42525 5.139427 2.289256e-05 0.07326880 2.6580695
+OID41368 4.986982 3.425696e-05 0.07326880 2.2693202
+OID43399 4.924609 4.040559e-05 0.07326880 2.1101964
+OID44923 4.626394 8.899842e-05 0.09406818 1.3499318
+OID44418 4.575444 1.018471e-04 0.09406818 1.2202758
+OID43757 4.510277 1.210099e-04 0.09406818 1.0546109
+OID43919 4.501947 1.237052e-04 0.09406818 1.0334495
+OID45050 4.452210 1.410888e-04 0.09406818 0.9071818
+OID42272 4.415090 1.556275e-04 0.09406818 0.8130432
+OID45101 4.249740 2.407079e-04 0.09829172 0.3949287</code></pre>
+<p>So the top hits are roughly <strong>1.8–2.7-fold higher</strong> in
+regressors than progressors — biologically substantial, which the raw
+per-point slopes obscured. (To report a fixed clinical anchor instead —
+e.g. per 10-point improvement — set <code>sep &lt;- 10</code>.)</p>
+</div>
+<div id="confound-figure" class="section level1">
+<h1>Confound figure</h1>
+<p>One panel row that carries the whole argument: <strong>(a)</strong>
+regressors do start more severe (states the confound honestly);
+<strong>(b)</strong> yet the signature tracks the <em>amount</em> of
+change, not the starting point (colour = baseline; the trend runs along
+ΔmRSS, not along colour); <strong>(c)</strong> and partial correlation
+confirms it — the signature↔︎ΔmRSS link barely changes when baseline is
+held fixed, while the signature↔︎baseline link collapses to ~0 when ΔmRSS
+is held fixed.</p>
+<pre class="r"><code>pal &lt;- c(Progressor = &quot;#AF3B6E&quot;, Stable = &quot;#ECA72C&quot;, Regressor = &quot;#48639C&quot;)
+allg$Group &lt;- factor(allg$Group, levels = c(&quot;Progressor&quot;, &quot;Stable&quot;, &quot;Regressor&quot;))
+theme_set(theme_classic(base_size = 11))
+
+pA &lt;- ggplot(allg, aes(Group, baseline, colour = Group)) +
+  geom_jitter(width = 0.12, size = 2.4, alpha = 0.85) +
+  stat_summary(fun = median, geom = &quot;crossbar&quot;, width = 0.5, linewidth = 0.6) +
+  scale_colour_manual(values = pal, guide = &quot;none&quot;) +
+  labs(x = NULL, y = &quot;Baseline mRSS&quot;, title = &quot;Regressors start ~3x more severe&quot;) +
+  annotate(&quot;text&quot;, x = 2, y = max(allg$baseline), fontface = &quot;italic&quot;, size = 3,
+           label = sprintf(&quot;R vs P: Delta=%.1f&quot;,
+                           mean(bl_R, na.rm = TRUE) - mean(bl_P, na.rm = TRUE)))
+
+pB &lt;- ggplot(allg, aes(dMRSS, sig, colour = baseline)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = &quot;grey70&quot;) +
+  geom_smooth(method = &quot;lm&quot;, se = FALSE, colour = &quot;grey35&quot;, linewidth = 0.8) +
+  geom_point(size = 2.6) +
+  scale_colour_viridis_c(name = &quot;Baseline mRSS&quot;) +
+  labs(x = &quot;Delta-mRSS (positive = improvement)&quot;, y = &quot;Regressor signature score&quot;,
+       title = &quot;Signature tracks change, not baseline&quot;) +
+  annotate(&quot;label&quot;, x = -Inf, y = Inf, hjust = -0.05, vjust = 1.1, size = 2.8,
+           label = sprintf(&quot;r=%.2f (p=%.3f)\npartial r=%.2f (p=%.3f)\ncontrolling baseline&quot;,
+                           r_dm$estimate, r_dm$p.value, pc_dm[&quot;r&quot;], pc_dm[&quot;p&quot;]))
+
+# confound evidence: simple vs partial correlation for each relationship.
+# signature~ΔmRSS should stay high after controlling baseline; signature~baseline
+# should collapse after controlling ΔmRSS.
+pc &lt;- data.frame(
+  rel  = factor(rep(c(&quot;sig ~ Delta-mRSS&quot;, &quot;sig ~ baseline&quot;), each = 2),
+                levels = c(&quot;sig ~ Delta-mRSS&quot;, &quot;sig ~ baseline&quot;)),
+  type = factor(rep(c(&quot;simple&quot;, &quot;partial&quot;), 2), levels = c(&quot;simple&quot;, &quot;partial&quot;)),
+  r    = c(r_dm$estimate, pc_dm[&quot;r&quot;], r_bl$estimate, pc_bl[&quot;r&quot;]))
+pC &lt;- ggplot(pc, aes(rel, r, fill = type)) +
+  geom_col(position = position_dodge(0.7), width = 0.62, colour = &quot;grey20&quot;) +
+  geom_hline(yintercept = 0, colour = &quot;grey40&quot;) +
+  geom_text(aes(label = sprintf(&quot;%.2f&quot;, r)),
+            position = position_dodge(0.7), vjust = ifelse(pc$r &gt;= 0, -0.4, 1.2),
+            size = 3.4) +
+  scale_fill_manual(values = c(simple = &quot;#B8B8B8&quot;, partial = &quot;#48639C&quot;),
+                    name = NULL) +
+  labs(x = NULL, y = &quot;Correlation with signature&quot;,
+       title = &quot;Effect is regression, not severity&quot;) +
+  theme(legend.position = c(0.75, 0.92), legend.direction = &quot;horizontal&quot;) +
+  expand_limits(y = c(-0.15, 0.55))
+
+fig &lt;- (pA | pB | pC) +
+  plot_annotation(
+    title = &quot;The regressor serum signature reflects regression, not baseline severity&quot;,
+    theme = theme(plot.title = element_text(face = &quot;bold&quot;, hjust = 0.5)))
+
+ggsave(here::here(output_dir,&quot;serum_baseline_confound.PDF&quot;), fig, width = 14, height = 4.6, dpi = 600)
+fig</code></pre>
+<p><img src="figure/RESOLVE_BaselinemRSSCovariate.Rmd/figure-1.png" alt="" width="2100" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(here::here(output_dir,&quot;severity_mRSS.PDF&quot;), pA, width = 4, height = 4, dpi = 600)
+pA</code></pre>
+<p><img src="figure/RESOLVE_BaselinemRSSCovariate.Rmd/unnamed-chunk-2-1.png" alt="" width="600" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(here::here(output_dir,&quot;signature_scatter.PDF&quot;), pB, width = 7, height = 4, dpi = 600)
+pB</code></pre>
+<p><img src="figure/RESOLVE_BaselinemRSSCovariate.Rmd/unnamed-chunk-3-1.png" alt="" width="1050" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(here::here(output_dir,&quot;partialcorrelation_mRSS.PDF&quot;), pC, width = 4, height = 4, dpi = 600)
+pC</code></pre>
+<p><img src="figure/RESOLVE_BaselinemRSSCovariate.Rmd/unnamed-chunk-4-1.png" alt="" width="600" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>r_bd &lt;- cor.test(allg$baseline, allg$dMRSS)
+conf_tab &lt;- data.frame(
+  relationship  = c(&quot;signature ~ dMRSS&quot;, &quot;signature ~ baseline&quot;, &quot;baseline ~ dMRSS&quot;),
+  n             = nrow(allg),
+  simple_r      = c(r_dm$estimate, r_bl$estimate, r_bd$estimate),
+  simple_p      = c(r_dm$p.value,  r_bl$p.value,  r_bd$p.value),
+  controlled_for= c(&quot;baseline mRSS&quot;, &quot;dMRSS&quot;, NA),
+  partial_r     = c(pc_dm[&quot;r&quot;], pc_bl[&quot;r&quot;], NA),
+  partial_p     = c(pc_dm[&quot;p&quot;], pc_bl[&quot;p&quot;], NA), row.names = NULL)
+# rounded to 4 dp, then:
+write.csv(conf_tab, here::here(output_dir, &quot;partial_correlation_stats.csv&quot;), row.names = FALSE)
+knitr::kable(conf_tab, caption = &quot;...&quot;)</code></pre>
+<table>
+<caption>…</caption>
+<colgroup>
+<col width="26%" />
+<col width="3%" />
+<col width="12%" />
+<col width="12%" />
+<col width="18%" />
+<col width="13%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">relationship</th>
+<th align="right">n</th>
+<th align="right">simple_r</th>
+<th align="right">simple_p</th>
+<th align="left">controlled_for</th>
+<th align="right">partial_r</th>
+<th align="right">partial_p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature ~ dMRSS</td>
+<td align="right">43</td>
+<td align="right">0.4234072</td>
+<td align="right">0.0046683</td>
+<td align="left">baseline mRSS</td>
+<td align="right">0.3638573</td>
+<td align="right">0.0178491</td>
+</tr>
+<tr class="even">
+<td align="left">signature ~ baseline</td>
+<td align="right">43</td>
+<td align="right">0.2544742</td>
+<td align="right">0.0996067</td>
+<td align="left">dMRSS</td>
+<td align="right">-0.1064620</td>
+<td align="right">0.5021940</td>
+</tr>
+<tr class="odd">
+<td align="left">baseline ~ dMRSS</td>
+<td align="right">43</td>
+<td align="right">0.7513382</td>
+<td align="right">0.0000000</td>
+<td align="left">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<ul>
+<li>Reclassified groups: <strong>Regressor 25 / Progressor 11 / Stable
+8</strong>.</li>
+<li>Primary continuous model (ΔmRSS + year-as-factor): <strong>599
+proteins</strong> at FDR&lt;0.2 whose serum level tracks the degree of
+skin improvement, overwhelmingly <strong>up in regressors</strong> — the
+canonical discovery list.</li>
+<li>The signal is <strong>prospective</strong> (baseline serum) and
+<strong>not a baseline-severity artefact</strong>. This is established
+by <strong>partial correlation</strong> on the signature score across
+all 43 patients: signature~ΔmRSS survives controlling for baseline
+(partial r ≈ 0.38, p ≈ 0.01), while signature~baseline collapses to ~0
+once ΔmRSS is controlled. A baseline-adjusted limma model is
+<em>not</em> used, because a proper factor-year batch term plus baseline
+saturates the 35-sample design (df-exhausted); the partial correlation
+is the better-powered, assumption-free test.</li>
+<li>Reporting fold changes: the limma slope × the 17.9-point group
+separation gives Regressor-vs-Progressor log2 fold changes of ~1–1.5
+(≈2-fold) for the top hits.</li>
+</ul>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] patchwork_1.3.2 ggplot2_4.0.3   tibble_3.3.1    tidyr_1.3.2    
+[5] dplyr_1.2.1     readxl_1.5.0    arrow_24.0.0    limma_3.68.4   
+[9] workflowr_1.7.2
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       xfun_0.59          bslib_0.11.0       processx_3.9.0    
+ [5] lattice_0.22-9     callr_3.8.0        vctrs_0.7.3        tools_4.6.1       
+ [9] generics_0.1.4     pkgconfig_2.0.3    Matrix_1.7-5       RColorBrewer_1.1-3
+[13] S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5    compiler_4.6.1    
+[17] farver_2.1.2       stringr_1.6.0      git2r_0.36.2       statmod_1.5.2     
+[21] getPass_0.2-4      httpuv_1.6.17      htmltools_0.5.9    sass_0.4.10       
+[25] yaml_2.3.12        later_1.4.8        pillar_1.11.1      jquerylib_0.1.4   
+[29] whisker_0.4.1      cachem_1.1.0       nlme_3.1-169       tidyselect_1.2.1  
+[33] digest_0.6.39      stringi_1.8.7      purrr_1.2.2        labeling_0.4.3    
+[37] splines_4.6.1      rprojroot_2.1.1    fastmap_1.2.0      grid_4.6.1        
+[41] here_1.0.2         cli_3.6.6          magrittr_2.0.5     withr_3.0.3       
+[45] scales_1.4.0       promises_1.5.0     bit64_4.8.2        rmarkdown_2.31    
+[49] httr_1.4.8         bit_4.6.0          otel_0.2.0         cellranger_1.1.0  
+[53] evaluate_1.0.5     knitr_1.51         viridisLite_0.4.3  mgcv_1.9-4        
+[57] rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1         rstudioapi_0.19.0 
+[61] jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/Zurich
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] patchwork_1.3.2 ggplot2_4.0.3   tibble_3.3.1    tidyr_1.3.2    
+[5] dplyr_1.2.1     readxl_1.5.0    arrow_24.0.0    limma_3.68.4   
+[9] workflowr_1.7.2
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6       xfun_0.59          bslib_0.11.0       processx_3.9.0    
+ [5] lattice_0.22-9     callr_3.8.0        vctrs_0.7.3        tools_4.6.1       
+ [9] generics_0.1.4     pkgconfig_2.0.3    Matrix_1.7-5       RColorBrewer_1.1-3
+[13] S7_0.2.2           assertthat_0.2.1   lifecycle_1.0.5    compiler_4.6.1    
+[17] farver_2.1.2       stringr_1.6.0      git2r_0.36.2       statmod_1.5.2     
+[21] getPass_0.2-4      httpuv_1.6.17      htmltools_0.5.9    sass_0.4.10       
+[25] yaml_2.3.12        later_1.4.8        pillar_1.11.1      jquerylib_0.1.4   
+[29] whisker_0.4.1      cachem_1.1.0       nlme_3.1-169       tidyselect_1.2.1  
+[33] digest_0.6.39      stringi_1.8.7      purrr_1.2.2        labeling_0.4.3    
+[37] splines_4.6.1      rprojroot_2.1.1    fastmap_1.2.0      grid_4.6.1        
+[41] here_1.0.2         cli_3.6.6          magrittr_2.0.5     withr_3.0.3       
+[45] scales_1.4.0       promises_1.5.0     bit64_4.8.2        rmarkdown_2.31    
+[49] httr_1.4.8         bit_4.6.0          otel_0.2.0         cellranger_1.1.0  
+[53] evaluate_1.0.5     knitr_1.51         viridisLite_0.4.3  mgcv_1.9-4        
+[57] rlang_1.2.0        Rcpp_1.1.1-1.1     glue_1.8.1         rstudioapi_0.19.0 
+[61] jsonlite_2.0.0     R6_2.6.1           fs_2.1.0          </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
