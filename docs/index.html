@@ -285,6 +285,9 @@ $(document).ready(function () {
     <li>
       <a href="RESOLVE_AnalysisD_PathwayEnrichment.html">Pathway Enrichment Analysis (Analysis D)</a>
     </li>
+    <li>
+      <a href="RESOLVE_BaselinemRSSCovariate.html">Correlation with Disease Severity</a>
+    </li>
   </ul>
 </li>
 <li class="dropdown">
@@ -351,7 +354,7 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2026-07-10
+<strong>Last updated:</strong> 2026-07-15
 </p>
 <p>
 <strong>Checks:</strong> <span
@@ -398,15 +401,15 @@ results.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstree3e64a0267c1ebd4d1ab7d6bf9ef78cb0277a1da8targetblank3e64a02a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreea87961182a3ddde6879719f241a05bfe5de08b5ftargetblanka879611a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/astridhofman7/SerumProteomics/tree/3e64a0267c1ebd4d1ab7d6bf9ef78cb0277a1da8" target="_blank">3e64a02</a>
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/a87961182a3ddde6879719f241a05bfe5de08b5f" target="_blank">a879611</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstree3e64a0267c1ebd4d1ab7d6bf9ef78cb0277a1da8targetblank3e64a02a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomastridhofman7SerumProteomicstreea87961182a3ddde6879719f241a05bfe5de08b5ftargetblanka879611a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -416,7 +419,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/astridhofman7/SerumProteomics/tree/3e64a0267c1ebd4d1ab7d6bf9ef78cb0277a1da8" target="_blank">3e64a02</a>.
+<a href="https://github.com/astridhofman7/SerumProteomics/tree/a87961182a3ddde6879719f241a05bfe5de08b5f" target="_blank">a879611</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -434,7 +437,6 @@ Ignored files:
     Ignored:    .DS_Store
     Ignored:    .Rhistory
     Ignored:    .Rproj.user/
-    Ignored:    Screenshot-2024-08-22-at-11.31.50_files/
     Ignored:    analysis/.DS_Store
     Ignored:    data/.DS_Store
     Ignored:    output/.DS_Store
@@ -444,9 +446,12 @@ Ignored files:
     Ignored:    output/Analysis_Cosimo/
 
 Untracked files:
-    Untracked:  MRSS_delta_correlations.png
     Untracked:  analysis/OLD/
+    Untracked:  analysis/RESOLVE_TopProteinsBoxplots.Rmd
+    Untracked:  analysis/hits_primary_dMRSS_year.csv
     Untracked:  analysis/output/
+    Untracked:  analysis/results_continuous_RvsP_properLogFC.csv
+    Untracked:  analysis/serum_baseline_confound.PDF
     Untracked:  code/11102024_PreliminaryLook_Preprocessing.Rmd
     Untracked:  code/14102024_MetaData.csv
     Untracked:  code/Final_FinalList_ArthritisControls_2024.08.15.xlsx
@@ -458,16 +463,20 @@ Untracked files:
     Untracked:  data/PEA/
     Untracked:  data/PRECISE_Pietro.xlsx
     Untracked:  data/metadata.xlsx
-    Untracked:  enrichment_results_ILD/
+    Untracked:  hits_primary_dMRSS_year.csv
     Untracked:  output/AnalysisD_PathwayEnrichment/
     Untracked:  output/ILD_Onset_Analysis/
     Untracked:  output/Pietro_InterferonScore/
     Untracked:  output/PreSScArthritis_vs_SScArthritis/
     Untracked:  output/PreSSc_Synovitis/
+    Untracked:  output/RESOLVE_EnrichmentAnalysis/
     Untracked:  output/SSc_Skin_Regression_Analysis/
     Untracked:  output/SSc_veSSc_vs_SSc_Arthritis_Analysis_Clean/
     Untracked:  output/UpdatedAnalysisPipelineCosimo/
     Untracked:  output/arthritis_analysis/
+    Untracked:  output/mRSSBaseline_Covariate/
+    Untracked:  results_continuous_RvsP_properLogFC.csv
+    Untracked:  serum_baseline_confound.png
     Untracked:  site_libs/
 
 Unstaged changes:
@@ -478,6 +487,7 @@ Unstaged changes:
     Modified:   RESOLVE_SerumProteomics.Rproj
     Modified:   _workflowr.yml
     Deleted:    analysis/PreSSc/PreSScArthritis_vs_SScArthritis.Rmd
+    Modified:   analysis/RESOLVE_SSc_Skin_Regression_Analysis.Rmd
     Deleted:    analysis/SSc_Skin_Regression_Analysis.Rmd
     Modified:   analysis/about.Rmd
     Modified:   analysis/license.Rmd
@@ -527,6 +537,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/astridhofman7/SerumProteomics/blob/a87961182a3ddde6879719f241a05bfe5de08b5f/analysis/index.Rmd" target="_blank">a879611</a>
+</td>
+<td>
+astridhofman7
+</td>
+<td>
+2026-07-15
+</td>
+<td>
+updatepage
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/astridhofman7/SerumProteomics/23140338b9c627d0dc31754f6bbe36a6907213f1/docs/index.html" target="_blank">2314033</a>
+</td>
+<td>
+astridhofman7
+</td>
+<td>
+2026-07-10
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -1150,6 +1194,8 @@ vs. SSc Arthritis</a></li>
 Binary vs. Continuous</a></li>
 <li><a href="RESOLVE_AnalysisD_PathwayEnrichment.html">Pathway
 Enrichment Analysis (Analysis D)</a></li>
+<li><a href="RESOLVE_BaselinemRSSCovariate.html">Correlation with
+Disease Severity</a></li>
 </ol>
 </div>
 <div id="ild-onset" class="section level3">
