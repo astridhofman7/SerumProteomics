@@ -17,6 +17,8 @@ navbar:
           href: SSc_Skin_Regression_Analysis.html
         - text: "Pathway Enrichment Analysis (Analysis D)"
           href: RESOLVE_AnalysisD_PathwayEnrichment.html
+        - text: "Correlation with Disease Severity"
+          href: RESOLVE_BaselinemRSSCovariate.html
     - text: "ILD Onset"
       menu:
         - text: "Identification of Deregulated Proteins"
