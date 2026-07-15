@@ -19,6 +19,7 @@ editor_options:
 
 1. [Analysis Types: Binary vs. Continuous](RESOLVE_SSc_Skin_Regression_Analysis.html)
 2. [Pathway Enrichment Analysis (Analysis D)](RESOLVE_AnalysisD_PathwayEnrichment.html)
+3. [Correlation with Disease Severity](RESOLVE_BaselinemRSSCovariate.html)
 
 ### ILD Onset
 
