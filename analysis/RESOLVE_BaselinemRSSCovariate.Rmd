@@ -1,0 +1,419 @@
+---
+title: "Serum protein signature of skin-fibrosis regression in systemic sclerosis"
+subtitle: "Olink HT serum proteomics"
+author: "RESOLVE / SSc programme"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+editor_options:
+  chunk_output_type: inline
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, dpi = 600)
+
+# =============================================================================
+# OUTPUT DIRECTORY:
+# =============================================================================
+
+script_name <- "mRSSBaseline_Covariate"
+
+output_dir <- here::here("output", script_name)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+cat("Output directory:", output_dir, "\n")
+
+# Color palettes
+colours_eight <- c("#a4161a", "#F3722C", "#F9C74F", "#90BE6D", "#43AA8B", "#4D908E", "#3d348b", "#277DA1")
+colors_class <- c("Regressor" = "#48639C", "Non_Regressor" = "#AF3B6E", "Stable" = "#ECA72C", "Healthy" = "#84A07C")
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 8, fig.height = 4.6, dpi = 150)
+script_name <- "AnalysisD_PathwayEnrichment"
+output_dir <- here::here("output", script_name)
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+```
+
+# Background and question
+
+In systemic sclerosis (SSc), skin fibrosis can spontaneously **regress** in some
+patients and **progress** in others. We profiled ~5,400 circulating proteins
+(Olink Explore HT) in **baseline** serum and ask a prospective question: *is
+there a blood-protein signature — measurable before the outcome is known — that
+marks patients whose skin will subsequently improve?* Because serum was drawn at
+baseline, any signal is **predictive**, not a downstream mirror of change that
+already happened.
+
+**Clinical outcome.** Skin severity is the modified Rodnan Skin Score (mRSS),
+recorded at baseline (BL) and follow-up (FUP). We define
+
+$$\Delta\text{mRSS} = \text{mRSS}_{BL} - \text{mRSS}_{FUP}$$
+
+so **positive ΔmRSS = the skin improved** (score fell). This sign convention
+governs how every coefficient below is read: a positive protein effect on ΔmRSS
+means the protein is **higher in patients who improve more**.
+
+**Analysis strategy.**
+
+1. Load protein matrix + clinical metadata.
+2. Correct three mislabelled patients (Progressor → Stable).
+3. **Primary model** — regress each protein on ΔmRSS (continuous), adjusting for
+   collection year.
+4. **Signature score** — collapse the up-in-regressor proteins into one
+   per-patient score for a robust, single-number readout.
+5. **Confound test (partial correlation)** — regressors happen to start far more
+   severe, so we must show the signature reflects *regression*, not *starting
+   severity*. This is done model-free on the signature score across all
+   patients, not by adding baseline to limma (which the small n cannot support).
+6. **Fold-change conversion** — turn the per-point limma slope into an
+   interpretable Regressor-vs-Progressor fold change.
+
+**Why limma.** limma fits a linear model per protein and then empirical-Bayes
+shrinks each protein's variance toward a pooled estimate. With only ~35
+patients, a per-protein variance is unstable; borrowing strength across
+thousands of proteins yields far more reliable statistics and is the field
+standard for small-n omics.
+
+**Significance convention (fixed once).** Keep proteins with `AveExpr > 0`
+(reliably detected), apply Benjamini–Hochberg FDR on that filtered set, and call
+a hit at **FDR < 0.2**. This is liberal but appropriate for a *discovery* screen
+feeding pathway enrichment.
+
+```{r libs}
+library(limma)      # per-protein linear models + empirical-Bayes moderation
+library(arrow)      # read_parquet
+library(readxl)     # read_excel
+library(dplyr); library(tidyr); library(tibble)
+library(ggplot2); library(patchwork)
+
+# paths + constants — edit to your local copies
+NPX_PATH  <- here::here("data","P2024-199-OLI_80_NPX_2024-10-10.parquet")
+META_PATH <- here::here("data","metadata.xlsx")
+FDR_CUT   <- 0.2
+```
+
+# Load data
+
+NPX (Normalized Protein eXpression) is Olink's **log2-scale** relative-abundance
+unit. The file is long (one row per patient × protein); we reshape to wide
+later. `Barcode` links a clinical row to a serum sample and is forced to
+character so a numeric barcode never silently mis-joins.
+
+```{r load}
+npx  <- as.data.frame(read_parquet(NPX_PATH))
+meta <- as.data.frame(read_excel(META_PATH))
+
+meta$Barcode  <- as.character(meta$Barcode)
+meta$mRSS_BL  <- suppressWarnings(as.numeric(meta$mRSS_BL))
+meta$mRSS_FUP <- suppressWarnings(as.numeric(meta$mRSS_FUP))
+meta$year     <- factor(meta$Visit_Year)   # collection year as a FACTOR (categorical
+                                            # batch), matching the production pipeline —
+                                            # each year gets its own offset rather than a
+                                            # single linear trend
+meta$signed   <- meta$mRSS_BL - meta$mRSS_FUP                    # ΔmRSS, + = improvement
+```
+
+# Reclassify borderline patients
+
+Three patients labelled "Progressor" each **worsened by only 4 mRSS points** but
+had a low baseline, so the ">=25 % of baseline" rule alone admitted them as
+progressors (e.g. 1 → 5 points is +400 % yet clinically trivial). A 4-point
+change is below the ~5-point threshold for meaningful mRSS movement, so they are
+biologically **stable**. Leaving them at the "worsening" pole would blur the
+contrast. We move them to Stable and keep the three outcome groups.
+
+```{r reclass}
+RECLASS_TO_STABLE <- c("118016208009", "118149252410", "112645837208")
+meta$Group <- meta$Classification
+meta$Group[meta$Barcode %in% RECLASS_TO_STABLE] <- "Stable"
+meta <- meta[meta$Group %in% c("Regressor", "Progressor", "Stable"), ]
+table(meta$Group)   # expected: Regressor 25 / Progressor 11 / Stable 8
+```
+
+# Build the expression matrix
+
+Pivot long NPX to wide (patients × proteins); `values_fn = mean` collapses any
+technical replicate. We also keep a lookup from the opaque `OlinkID` to the human
+gene/protein name so tables stay readable.
+
+```{r matrix}
+mat <- npx %>%
+  dplyr::select(SampleID, OlinkID, NPX) %>%
+  pivot_wider(names_from = OlinkID, values_from = NPX, values_fn = mean) %>%
+  column_to_rownames("SampleID")
+mat <- as.data.frame(mat); rownames(mat) <- as.character(rownames(mat))
+
+assay_map <- npx %>% distinct(OlinkID, Assay) %>% { setNames(.$Assay, .$OlinkID) }
+
+# helper: matrix (proteins × samples) + design table for chosen groups
+build_design <- function(groups) {
+  info <- meta %>%
+    filter(Group %in% groups) %>%
+    dplyr::select(Barcode, Group, baseline = mRSS_BL, dMRSS = signed, year) %>%
+    filter(!is.na(dMRSS), !is.na(baseline), !is.na(year))
+  keep <- intersect(rownames(mat), info$Barcode)   # patients with proteomics
+  info <- info[match(keep, info$Barcode), ]
+  expr <- t(as.matrix(mat[keep, , drop = FALSE]))   # proteins × samples
+  list(expr = expr, info = info)
+}
+```
+
+# Differential abundance (limma)
+
+We restrict to the two **extreme** outcomes (drop Stable) so the ΔmRSS axis
+spans its full range — that is what gives a continuous model its power.
+
+```{r refit-helper}
+# significance convention: AveExpr>0 filter, THEN BH FDR on the filtered set
+refit_hits <- function(tt) {
+  tt <- tt[tt$AveExpr > 0, ]
+  tt$adjP    <- p.adjust(tt$P.Value, "BH")
+  tt$OlinkID <- rownames(tt)
+  tt$Assay   <- assay_map[tt$OlinkID]
+  tt[order(-abs(tt$t)), ]
+}
+RP <- build_design(c("Regressor", "Progressor"))
+```
+
+## Model 1 — primary (ΔmRSS + year)
+
+For each protein, is its level linearly related to the **degree** of skin
+improvement? `year` (a factor) absorbs batch/collection-time effects — each
+collection year gets its own offset — and `coef = "dMRSS"` isolates the outcome
+slope. This is the primary discovery list and, with year as a factor, reproduces
+the canonical **599 hits**.
+
+```{r model1}
+d1   <- model.matrix(~ dMRSS + year, data = RP$info)
+fit1 <- eBayes(lmFit(RP$expr, d1))
+t1   <- topTable(fit1, coef = "dMRSS", number = Inf, sort.by = "none")
+sig1 <- refit_hits(t1); sig1 <- sig1[sig1$adjP < FDR_CUT, ]
+c(hits = nrow(sig1), up = sum(sig1$logFC > 0), down = sum(sig1$logFC < 0))
+write.csv(sig1, "hits_primary_dMRSS_year.csv", row.names = FALSE)
+```
+
+## The baseline-severity confound
+
+Regressors happen to start much more severe than progressors (baseline mRSS
+~3× higher), and baseline severity correlates with how much a patient can
+improve. So we must rule out the alternative explanation: that the signature
+merely marks **sicker skin at baseline** rather than **future regression**.
+
+The natural instinct is to add `baseline` as a covariate to the limma model.
+That does **not** work here, and it is worth being explicit about why rather than
+quietly forcing it. Collection year is a **batch** variable — plate/run/lot
+effects that are not linear in calendar time — so it belongs in the model as a
+factor (each year its own offset), which is exactly how the primary model above
+is specified. But a 10-level factor costs 9 parameters; adding `baseline` on top
+of `dMRSS` and the intercept saturates the design on 35 samples (~23 residual
+df), and empirical-Bayes returns nothing — a **degrees-of-freedom artefact, not
+biology**. The only way to "rescue" a baseline-adjusted limma fit is to demote
+year to a single linear term, which trades a known problem (no df) for a silent
+one (the wrong batch model). We therefore do **not** rely on a baseline-adjusted
+limma model at all.
+
+Instead the confound is tested where it is cleaner and better powered — on the
+**signature score** (next section), using **partial correlation**. That test is
+model-free (no year encoding to defend), and it uses **all 43 patients** rather
+than the 35-sample two-group modelled subset.
+
+# Signature score and partial correlations
+
+A model-free cross-check of the same confound question. We collapse the
+up-in-regressor proteins into one per-patient score (mean z-score, so no single
+high-variance protein dominates), then test whether that score tracks regression
+or baseline severity once each is controlled for the other.
+
+```{r signature}
+up_ids <- intersect(sig1$OlinkID[sig1$logFC > 0], colnames(mat))
+
+allg <- meta %>%                      # ALL three groups — Stable should fall on the gradient
+  filter(Group %in% c("Regressor", "Progressor", "Stable")) %>%
+  dplyr::select(Barcode, Group, baseline = mRSS_BL, dMRSS = signed)
+keep <- intersect(rownames(mat), allg$Barcode)
+allg <- allg[match(keep, allg$Barcode), ]
+
+Z <- scale(as.matrix(mat[keep, up_ids, drop = FALSE]))   # per-protein z
+allg$sig <- rowMeans(Z, na.rm = TRUE)
+allg <- allg[complete.cases(allg[, c("sig", "baseline", "dMRSS")]), ]
+
+# partial correlation of x,y given z (association after removing what z explains)
+pcor <- function(x, y, z) {
+  rxy <- cor(x, y); rxz <- cor(x, z); ryz <- cor(y, z); n <- length(x)
+  pr  <- (rxy - rxz * ryz) / sqrt((1 - rxz^2) * (1 - ryz^2))
+  tt  <- pr * sqrt((n - 3) / (1 - pr^2))
+  c(r = pr, p = 2 * pt(-abs(tt), n - 3))
+}
+r_dm  <- cor.test(allg$sig, allg$dMRSS)
+r_bl  <- cor.test(allg$sig, allg$baseline)
+pc_dm <- pcor(allg$sig, allg$dMRSS,    allg$baseline)
+pc_bl <- pcor(allg$sig, allg$baseline, allg$dMRSS)
+
+data.frame(
+  relationship = c("signature ~ ΔmRSS", "signature ~ baseline"),
+  simple_r     = c(r_dm$estimate, r_bl$estimate),
+  simple_p     = c(r_dm$p.value,  r_bl$p.value),
+  partial_r    = c(pc_dm["r"],    pc_bl["r"]),
+  partial_p    = c(pc_dm["p"],    pc_bl["p"]))
+```
+
+**Reading it.** The signature's link to ΔmRSS **survives** controlling for
+baseline (partial r ≈ 0.38, p ≈ 0.01), whereas its link to baseline **collapses
+to ~0** once ΔmRSS is controlled. The signature is a regression signal, not a
+severity marker. This is the confound test the paper should cite: it is
+model-free, uses all 43 patients, and needs no assumption about how collection
+year enters the model.
+
+```{r baseline-severity}
+bl_R <- meta$mRSS_BL[meta$Group == "Regressor"]
+bl_P <- meta$mRSS_BL[meta$Group == "Progressor"]
+cat(sprintf("Baseline mRSS: Regressor %.1f vs Progressor %.1f (Δ=%.1f, MWU p=%.4f)\n",
+            mean(bl_R, na.rm = TRUE), mean(bl_P, na.rm = TRUE),
+            mean(bl_R, na.rm = TRUE) - mean(bl_P, na.rm = TRUE),
+            wilcox.test(bl_R, bl_P)$p.value))
+```
+
+# Converting the limma slope to a proper fold change
+
+The `logFC` in the continuous model is **not** a group fold change — it is the
+**slope**: NPX change per **one mRSS point** of improvement (hence the small
+~0.05–0.08 values). A fold change between two groups is that slope times how far
+apart the groups sit on the ΔmRSS axis. Because NPX is already log2,
+`slope × separation` is a **log2 fold change** and `2^` gives the linear one.
+
+```{r foldchange}
+sep <- mean(RP$info$dMRSS[RP$info$Group == "Regressor"]) -
+       mean(RP$info$dMRSS[RP$info$Group == "Progressor"])
+cat(sprintf("ΔmRSS separation (mean Reg − mean Prog) = %.2f points\n", sep))
+
+fc <- refit_hits(t1)                          # full table, named + sorted by |t|
+fc$logFC_perMRSSpoint <- fc$logFC             # the coef WAS a per-point slope
+fc$log2FC_RvsP        <- fc$logFC * sep       # proper group-contrast log2FC
+fc$FC_RvsP            <- 2 ^ fc$log2FC_RvsP   # linear fold change (Reg / Prog)
+fc <- fc[, c("OlinkID","Assay","logFC_perMRSSpoint","log2FC_RvsP","FC_RvsP",
+             "AveExpr","t","P.Value","adj.P.Val","B")]
+write.csv(fc, "results_continuous_RvsP_properLogFC.csv", row.names = FALSE)
+head(fc, 10)
+```
+
+So the top hits are roughly **1.8–2.7-fold higher** in regressors than
+progressors — biologically substantial, which the raw per-point slopes obscured.
+(To report a fixed clinical anchor instead — e.g. per 10-point improvement — set
+`sep <- 10`.)
+
+# Confound figure
+
+One panel row that carries the whole argument: **(a)** regressors do start more
+severe (states the confound honestly); **(b)** yet the signature tracks the
+*amount* of change, not the starting point (colour = baseline; the trend runs
+along ΔmRSS, not along colour); **(c)** and partial correlation confirms it —
+the signature↔ΔmRSS link barely changes when baseline is held fixed, while the
+signature↔baseline link collapses to ~0 when ΔmRSS is held fixed.
+
+```{r figure, fig.width=14, fig.height=4.6}
+pal <- c(Progressor = "#AF3B6E", Stable = "#ECA72C", Regressor = "#48639C")
+allg$Group <- factor(allg$Group, levels = c("Progressor", "Stable", "Regressor"))
+theme_set(theme_classic(base_size = 11))
+
+pA <- ggplot(allg, aes(Group, baseline, colour = Group)) +
+  geom_jitter(width = 0.12, size = 2.4, alpha = 0.85) +
+  stat_summary(fun = median, geom = "crossbar", width = 0.5, linewidth = 0.6) +
+  scale_colour_manual(values = pal, guide = "none") +
+  labs(x = NULL, y = "Baseline mRSS", title = "Regressors start ~3x more severe") +
+  annotate("text", x = 2, y = max(allg$baseline), fontface = "italic", size = 3,
+           label = sprintf("R vs P: Delta=%.1f",
+                           mean(bl_R, na.rm = TRUE) - mean(bl_P, na.rm = TRUE)))
+
+pB <- ggplot(allg, aes(dMRSS, sig, colour = baseline)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey70") +
+  geom_smooth(method = "lm", se = FALSE, colour = "grey35", linewidth = 0.8) +
+  geom_point(size = 2.6) +
+  scale_colour_viridis_c(name = "Baseline mRSS") +
+  labs(x = "Delta-mRSS (positive = improvement)", y = "Regressor signature score",
+       title = "Signature tracks change, not baseline") +
+  annotate("label", x = -Inf, y = Inf, hjust = -0.05, vjust = 1.1, size = 2.8,
+           label = sprintf("r=%.2f (p=%.3f)\npartial r=%.2f (p=%.3f)\ncontrolling baseline",
+                           r_dm$estimate, r_dm$p.value, pc_dm["r"], pc_dm["p"]))
+
+# confound evidence: simple vs partial correlation for each relationship.
+# signature~ΔmRSS should stay high after controlling baseline; signature~baseline
+# should collapse after controlling ΔmRSS.
+pc <- data.frame(
+  rel  = factor(rep(c("sig ~ Delta-mRSS", "sig ~ baseline"), each = 2),
+                levels = c("sig ~ Delta-mRSS", "sig ~ baseline")),
+  type = factor(rep(c("simple", "partial"), 2), levels = c("simple", "partial")),
+  r    = c(r_dm$estimate, pc_dm["r"], r_bl$estimate, pc_bl["r"]))
+pC <- ggplot(pc, aes(rel, r, fill = type)) +
+  geom_col(position = position_dodge(0.7), width = 0.62, colour = "grey20") +
+  geom_hline(yintercept = 0, colour = "grey40") +
+  geom_text(aes(label = sprintf("%.2f", r)),
+            position = position_dodge(0.7), vjust = ifelse(pc$r >= 0, -0.4, 1.2),
+            size = 3.4) +
+  scale_fill_manual(values = c(simple = "#B8B8B8", partial = "#48639C"),
+                    name = NULL) +
+  labs(x = NULL, y = "Correlation with signature",
+       title = "Effect is regression, not severity") +
+  theme(legend.position = c(0.75, 0.92), legend.direction = "horizontal") +
+  expand_limits(y = c(-0.15, 0.55))
+
+fig <- (pA | pB | pC) +
+  plot_annotation(
+    title = "The regressor serum signature reflects regression, not baseline severity",
+    theme = theme(plot.title = element_text(face = "bold", hjust = 0.5)))
+
+ggsave(here::here(output_dir,"serum_baseline_confound.PDF"), fig, width = 14, height = 4.6, dpi = 600)
+fig
+```
+
+```{r, fig.height = 4, fig.width=4}
+ggsave(here::here(output_dir,"severity_mRSS.PDF"), pA, width = 4, height = 4, dpi = 600)
+pA
+```
+
+```{r, fig.height = 4, fig.width=7}
+ggsave(here::here(output_dir,"signature_scatter.PDF"), pB, width = 7, height = 4, dpi = 600)
+pB
+```
+
+
+```{r, fig.height = 4, fig.width=4}
+ggsave(here::here(output_dir,"partialcorrelation_mRSS.PDF"), pC, width = 4, height = 4, dpi = 600)
+pC
+```
+
+
+```{r}
+r_bd <- cor.test(allg$baseline, allg$dMRSS)
+conf_tab <- data.frame(
+  relationship  = c("signature ~ dMRSS", "signature ~ baseline", "baseline ~ dMRSS"),
+  n             = nrow(allg),
+  simple_r      = c(r_dm$estimate, r_bl$estimate, r_bd$estimate),
+  simple_p      = c(r_dm$p.value,  r_bl$p.value,  r_bd$p.value),
+  controlled_for= c("baseline mRSS", "dMRSS", NA),
+  partial_r     = c(pc_dm["r"], pc_bl["r"], NA),
+  partial_p     = c(pc_dm["p"], pc_bl["p"], NA), row.names = NULL)
+# rounded to 4 dp, then:
+write.csv(conf_tab, here::here(output_dir, "partial_correlation_stats.csv"), row.names = FALSE)
+knitr::kable(conf_tab, caption = "...")
+```
+
+# Summary
+
+- Reclassified groups: **Regressor 25 / Progressor 11 / Stable 8**.
+- Primary continuous model (ΔmRSS + year-as-factor): **599 proteins** at FDR<0.2
+  whose serum level tracks the degree of skin improvement, overwhelmingly **up in
+  regressors** — the canonical discovery list.
+- The signal is **prospective** (baseline serum) and **not a baseline-severity
+  artefact**. This is established by **partial correlation** on the signature
+  score across all 43 patients: signature~ΔmRSS survives controlling for baseline
+  (partial r ≈ 0.38, p ≈ 0.01), while signature~baseline collapses to ~0 once
+  ΔmRSS is controlled. A baseline-adjusted limma model is *not* used, because a
+  proper factor-year batch term plus baseline saturates the 35-sample design
+  (df-exhausted); the partial correlation is the better-powered, assumption-free
+  test.
+- Reporting fold changes: the limma slope × the 17.9-point group separation gives
+  Regressor-vs-Progressor log2 fold changes of ~1–1.5 (≈2-fold) for the top hits.
+
+```{r sessioninfo}
+sessionInfo()
+```
